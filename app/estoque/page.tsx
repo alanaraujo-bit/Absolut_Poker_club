@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, AlertTriangle, Package, FileDown } from 'lucide-react'
+import { Plus, AlertTriangle, Package, FileDown, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -138,6 +138,36 @@ export default function EstoquePage() {
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o estoque",
+        variant: "destructive",
+      })
+    }
+  }
+
+  async function excluirProduto(id: number, nome: string) {
+    if (!confirm(`Tem certeza que deseja excluir "${nome}"?`)) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/produtos/${id}`, {
+        method: 'DELETE',
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        toast({
+          title: "Sucesso!",
+          description: data.message,
+        })
+        fetchProdutos()
+      } else {
+        throw new Error(data.error || 'Erro ao excluir')
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível excluir o produto",
         variant: "destructive",
       })
     }
@@ -290,6 +320,7 @@ export default function EstoquePage() {
                         <TableHead>Preço</TableHead>
                         <TableHead>Estoque</TableHead>
                         <TableHead>Adicionar</TableHead>
+                        <TableHead>Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -341,6 +372,16 @@ export default function EstoquePage() {
                                 <Plus className="h-4 w-4" />
                               </Button>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => excluirProduto(produto.id, produto.nome)}
+                              title="Excluir produto"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}

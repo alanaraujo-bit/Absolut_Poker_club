@@ -45,28 +45,9 @@ export default function UsuariosPage() {
 
   const carregarUsuarios = async () => {
     try {
-      const res = await fetch('/api/usuarios')
+      const res = await fetch('/api/usuarios', { cache: 'no-store' })
       const data = await res.json()
-      
-      // Carregar estatísticas dos garçons
-      const usuariosComStats = await Promise.all(
-        data.map(async (usuario: Usuario) => {
-          if (usuario.tipo === 'garcom') {
-            try {
-              const statsRes = await fetch(`/api/garcom/perfil?garcomId=${usuario.id}`)
-              if (statsRes.ok) {
-                const stats = await statsRes.json()
-                return { ...usuario, stats }
-              }
-            } catch (error) {
-              console.error(`Erro ao carregar stats do garçom ${usuario.id}:`, error)
-            }
-          }
-          return usuario
-        })
-      )
-      
-      setUsuarios(usuariosComStats)
+      setUsuarios(data)
     } catch (error) {
       console.error('Erro ao carregar usuários:', error)
     } finally {
@@ -132,26 +113,26 @@ export default function UsuariosPage() {
   }
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
       
-      <main className="flex-1 lg:ml-72 pb-20 lg:pb-0">
-        <PageHeader
-          title="Usuários"
-          description="Gerenciar usuários do sistema"
-        />
-
-        <div className="p-4 sm:p-6 lg:p-8">
-          {/* Botão Adicionar */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowModal(true)}
-            className="mb-6 btn-poker-primary px-6 py-3 rounded-xl flex items-center gap-2 text-lg font-semibold"
-          >
-            <Plus className="w-5 h-5" />
-            Novo Usuário
-          </motion.button>
+      <main className="flex-1 lg:ml-72 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
+        <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+          <div className="flex items-center justify-between">
+            <PageHeader
+              title="Usuários"
+              description="Gerenciar usuários do sistema"
+            />
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowModal(true)}
+              className="btn-poker-primary px-6 py-3 rounded-xl flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="hidden sm:inline">Novo Usuário</span>
+            </motion.button>
+          </div>
 
           {loading ? (
             <div className="text-center py-12">
@@ -169,7 +150,6 @@ export default function UsuariosPage() {
                         <th className="px-6 py-4 text-left text-sm font-semibold gold-text">Nome</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold gold-text">Usuário</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold gold-text">Tipo</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold gold-text">Estatísticas</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold gold-text">Status</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold gold-text">Ações</th>
                       </tr>
@@ -193,26 +173,6 @@ export default function UsuariosPage() {
                             }`}>
                               {usuario.tipo === 'admin' ? '👑 Admin' : '🍺 Garçom'}
                             </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            {usuario.tipo === 'garcom' && usuario.stats ? (
-                              <div className="space-y-1 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-muted-foreground">Comandas:</span>
-                                  <span className="font-semibold">{usuario.stats.totalComandas}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-muted-foreground">Total:</span>
-                                  <span className="font-semibold gold-text">R$ {usuario.stats.totalVendido.toFixed(2)}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-muted-foreground">Hoje:</span>
-                                  <span className="font-semibold text-green-400">{usuario.stats.comandasHoje}</span>
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">-</span>
-                            )}
                           </td>
                           <td className="px-6 py-4">
                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -286,23 +246,6 @@ export default function UsuariosPage() {
                         {usuario.ativo ? 'Ativo' : 'Inativo'}
                       </span>
                     </div>
-
-                    {usuario.tipo === 'garcom' && usuario.stats && (
-                      <div className="pt-3 border-t border-primary/20 space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Total de Comandas:</span>
-                          <span className="font-semibold">{usuario.stats.totalComandas}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Total Vendido:</span>
-                          <span className="font-semibold gold-text">R$ {usuario.stats.totalVendido.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Comandas Hoje:</span>
-                          <span className="font-semibold text-green-400">{usuario.stats.comandasHoje}</span>
-                        </div>
-                      </div>
-                    )}
                   </motion.div>
                 ))}
               </div>

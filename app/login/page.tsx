@@ -16,16 +16,24 @@ export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [senha, setSenha] = useState('')
   const [loading, setLoading] = useState(false)
+  const [devMode, setDevMode] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/login', {
+      // Detectar se é login de desenvolvedor
+      const isDeveloper = devMode || username.includes('@')
+      const endpoint = isDeveloper ? '/api/dev/auth' : '/api/auth/login'
+      const body = isDeveloper 
+        ? { email: username, senha }
+        : { username, senha }
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, senha }),
+        body: JSON.stringify(body),
       })
 
       if (!res.ok) {
@@ -35,7 +43,27 @@ export default function LoginPage() {
 
       const data = await res.json()
       
-      // Usar o método login do contexto
+      // Se for desenvolvedor, redirecionar para painel dev
+      if (isDeveloper && data.devUser) {
+        const devUserData = {
+          ...data.devUser,
+          tipo: 'developer' as const
+        }
+        
+        console.log('💾 Salvando desenvolvedor...')
+        login(devUserData)
+        
+        toast({
+          title: '🔧 Acesso Desenvolvedor',
+          description: `Bem-vindo, ${data.devUser.nome}!`,
+        })
+        
+        console.log('🚀 Redirecionando para /developer...')
+        router.push('/developer')
+        return
+      }
+      
+      // Usar o método login do contexto para usuários normais
       login(data.usuario)
 
       toast({
@@ -101,6 +129,18 @@ export default function LoginPage() {
           >
             <h1 className="text-3xl font-bold gold-text mb-2">Absolute Poker</h1>
             <p className="text-poker-gold/70 text-sm">Sistema de Gerenciamento</p>
+            {devMode && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="mt-3 px-3 py-1.5 bg-poker-red/20 border border-poker-red/50 rounded-lg"
+              >
+                <p className="text-xs text-poker-red font-semibold flex items-center justify-center gap-2">
+                  <span>🔧</span>
+                  Modo Desenvolvedor Ativo
+                </p>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Formulário */}
@@ -111,7 +151,7 @@ export default function LoginPage() {
               transition={{ delay: 0.4 }}
             >
               <Label htmlFor="username" className="text-poker-gold/90 mb-2 block text-sm font-medium">
-                Usuário
+                {devMode ? 'E-mail Desenvolvedor' : 'Usuário'}
               </Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-poker-gold/50" />
@@ -120,7 +160,7 @@ export default function LoginPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Digite seu usuário"
+                  placeholder={devMode ? "seu-email@outlook.com" : "Digite seu usuário"}
                   className="pl-11 bg-poker-green/30 border-poker-gold/30 text-white placeholder:text-poker-gold/40 h-12 rounded-xl focus:border-poker-gold focus:ring-poker-gold/20"
                   required
                   autoFocus
@@ -183,6 +223,18 @@ export default function LoginPage() {
               Usuário padrão: <span className="text-poker-gold/70 font-mono">admin</span> / Senha: <span className="text-poker-gold/70 font-mono">admin123</span>
             </p>
           </motion.div>
+
+          {/* Botão Secreto de Desenvolvedor */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: devMode ? 1 : 0.3 }}
+            transition={{ delay: 0.8 }}
+            type="button"
+            onClick={() => setDevMode(!devMode)}
+            className="mt-4 w-full py-2 text-xs text-poker-gold/30 hover:text-poker-red transition-colors"
+          >
+            {devMode ? '🔧 Modo Desenvolvedor Ativo' : '• • •'}
+          </motion.button>
         </div>
 
         {/* Footer */}

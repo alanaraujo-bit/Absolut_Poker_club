@@ -119,7 +119,7 @@ export default function RelatoriosPage() {
       
       <main className="flex-1 lg:ml-72 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <PageHeader 
                 title="Relatórios"
@@ -134,7 +134,7 @@ export default function RelatoriosPage() {
             <Button 
               onClick={handleExportPDF}
               size="sm"
-              className="gap-2 btn-poker-primary w-full sm:w-auto"
+              className="gap-2 btn-poker-primary"
             >
               <FileDown className="h-4 w-4" />
               <span className="hidden sm:inline">Exportar PDF</span>

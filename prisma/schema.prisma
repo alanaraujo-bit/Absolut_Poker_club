@@ -126,3 +126,15 @@ model ItemPedido {
 
   @@map("itens_pedido")
 }
+
+model DevUser {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  senha           String    // Hash da senha
+  nome            String    @default("Developer")
+  ativo           Boolean   @default(true)
+  lastLogin       DateTime? @map("last_login")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@map("dev_users")
+}
