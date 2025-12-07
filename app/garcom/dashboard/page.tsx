@@ -28,6 +28,13 @@ export default function DashboardGarcomPage() {
 
   useEffect(() => {
     carregarStats()
+    
+    // Atualização automática a cada 3 segundos (mais rápido para garçom)
+    const interval = setInterval(() => {
+      carregarStats()
+    }, 3000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const carregarStats = async () => {

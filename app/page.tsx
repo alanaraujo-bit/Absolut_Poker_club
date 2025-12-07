@@ -28,6 +28,13 @@ export default function Home() {
 
   useEffect(() => {
     fetchStats()
+    
+    // Atualização automática a cada 5 segundos
+    const interval = setInterval(() => {
+      fetchStats()
+    }, 5000)
+
+    return () => clearInterval(interval)
   }, [])
 
   async function fetchStats() {
@@ -82,11 +89,17 @@ export default function Home() {
       {/* Main content - Padding apenas para bottom nav mobile */}
       <main className="flex-1 lg:ml-72 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-          <PageHeader 
-            title="Dashboard ACATH"
-            description="Associação Canaense Absolut de Texas Hold'em"
-            icon={LayoutDashboard}
-          />
+          <div className="flex items-center justify-between">
+            <PageHeader 
+              title="Dashboard ACATH"
+              description="Associação Canaense Absolut de Texas Hold'em"
+              icon={LayoutDashboard}
+            />
+            <div className="flex items-center gap-2 text-xs text-green-500">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="hidden md:inline">Atualização em tempo real</span>
+            </div>
+          </div>
 
           {/* Stats Cards - Mobile optimized */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">

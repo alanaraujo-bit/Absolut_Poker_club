@@ -41,6 +41,13 @@ export default function ClientesPage() {
 
   useEffect(() => {
     fetchClientes()
+    
+    // Atualização automática a cada 5 segundos
+    const interval = setInterval(() => {
+      fetchClientes()
+    }, 5000)
+
+    return () => clearInterval(interval)
   }, [])
 
   async function fetchClientes() {

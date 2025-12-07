@@ -49,6 +49,14 @@ export default function PedidosPage() {
   useEffect(() => {
     fetchProdutos()
     fetchClientes()
+    
+    // Atualização automática a cada 10 segundos
+    const interval = setInterval(() => {
+      fetchProdutos()
+      fetchClientes()
+    }, 10000)
+
+    return () => clearInterval(interval)
   }, [])
 
   async function fetchProdutos() {

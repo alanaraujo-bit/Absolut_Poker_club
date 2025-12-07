@@ -40,6 +40,13 @@ export default function RelatoriosPage() {
 
   useEffect(() => {
     fetchRelatorios()
+    
+    // Atualização automática a cada 5 segundos
+    const interval = setInterval(() => {
+      fetchRelatorios()
+    }, 5000)
+
+    return () => clearInterval(interval)
   }, [])
 
   async function fetchRelatorios() {
@@ -113,11 +120,17 @@ export default function RelatoriosPage() {
       <main className="flex-1 lg:ml-72 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <PageHeader 
-              title="Relatórios"
-              description="Análise de vendas e performance"
-              icon={BarChart3}
-            />
+            <div className="flex items-center gap-4">
+              <PageHeader 
+                title="Relatórios"
+                description="Análise de vendas e performance"
+                icon={BarChart3}
+              />
+              <div className="flex items-center gap-2 text-xs text-green-500">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="hidden lg:inline">Tempo real</span>
+              </div>
+            </div>
             <Button 
               onClick={handleExportPDF}
               size="sm"
