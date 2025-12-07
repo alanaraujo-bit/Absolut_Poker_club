@@ -21,7 +21,25 @@ export async function GET() {
       0
     )
 
-    const totalPedidosHoje = comandasHoje.length
+    // Comandas abertas hoje (em andamento)
+    const comandasAbertasHoje = await prisma.comanda.findMany({
+      where: {
+        status: 'aberta',
+        dataAbertura: {
+          gte: hoje,
+        },
+      },
+    })
+
+    const totalAbertasHoje = comandasAbertasHoje.reduce(
+      (sum, comanda) => sum + Number(comanda.valorTotal),
+      0
+    )
+
+    // Total = Fechadas + Abertas
+    const totalGeralHoje = totalVendidoHoje + totalAbertasHoje
+
+    const totalPedidosHoje = comandasHoje.length + comandasAbertasHoje.length
 
     // Produto mais vendido (geral, de todas as comandas)
     const itensMaisVendidos = await prisma.itemComanda.groupBy({
@@ -56,7 +74,7 @@ export async function GET() {
     })
 
     return NextResponse.json({
-      totalVendidoHoje,
+      totalVendidoHoje: totalGeralHoje,
       totalPedidosHoje,
       produtoMaisVendido,
       estoquesBaixos,

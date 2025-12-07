@@ -19,7 +19,17 @@ export async function GET() {
       },
     })
 
+    const comandasAbertasHoje = await prisma.comanda.findMany({
+      where: {
+        status: 'aberta',
+        dataAbertura: { gte: hoje },
+      },
+    })
+
     const vendasHoje = comandasHoje.reduce(
+      (sum, comanda) => sum + Number(comanda.valorTotal),
+      0
+    ) + comandasAbertasHoje.reduce(
       (sum, comanda) => sum + Number(comanda.valorTotal),
       0
     )
@@ -32,7 +42,17 @@ export async function GET() {
       },
     })
 
+    const comandasAbertasSemana = await prisma.comanda.findMany({
+      where: {
+        status: 'aberta',
+        dataAbertura: { gte: inicioSemana },
+      },
+    })
+
     const vendasSemana = comandasSemana.reduce(
+      (sum, comanda) => sum + Number(comanda.valorTotal),
+      0
+    ) + comandasAbertasSemana.reduce(
       (sum, comanda) => sum + Number(comanda.valorTotal),
       0
     )
@@ -45,7 +65,17 @@ export async function GET() {
       },
     })
 
+    const comandasAbertasMes = await prisma.comanda.findMany({
+      where: {
+        status: 'aberta',
+        dataAbertura: { gte: inicioMes },
+      },
+    })
+
     const vendasMes = comandasMes.reduce(
+      (sum, comanda) => sum + Number(comanda.valorTotal),
+      0
+    ) + comandasAbertasMes.reduce(
       (sum, comanda) => sum + Number(comanda.valorTotal),
       0
     )

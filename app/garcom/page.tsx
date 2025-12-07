@@ -52,6 +52,13 @@ export default function GarcomPage() {
 
   useEffect(() => {
     carregarComandasAbertas()
+    
+    // Atualização automática a cada 3 segundos
+    const interval = setInterval(() => {
+      carregarComandasAbertas()
+    }, 3000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const carregarComandasAbertas = async () => {
