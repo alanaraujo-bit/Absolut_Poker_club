@@ -7,31 +7,17 @@ export async function POST(
 ) {
   try {
     const body = await request.json()
-    const { valor, descricao } = body
+    const { valor } = body
     const clienteId = parseInt(params.id)
 
-    // Registrar pagamento (crédito)
-    await prisma.$transaction([
-      prisma.movimentacaoCliente.create({
-        data: {
-          clienteId,
-          tipo: 'credito',
-          valor: parseFloat(valor),
-          descricao: descricao || 'Pagamento recebido'
+    // Atualizar saldo do cliente (pagamento manual/ajuste)
+    const clienteAtualizado = await prisma.cliente.update({
+      where: { id: clienteId },
+      data: {
+        saldo: {
+          increment: parseFloat(valor)
         }
-      }),
-      prisma.cliente.update({
-        where: { id: clienteId },
-        data: {
-          saldo: {
-            increment: parseFloat(valor)
-          }
-        }
-      })
-    ])
-
-    const clienteAtualizado = await prisma.cliente.findUnique({
-      where: { id: clienteId }
+      }
     })
 
     return NextResponse.json(clienteAtualizado)
