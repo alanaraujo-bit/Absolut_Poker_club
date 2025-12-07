@@ -4,10 +4,11 @@ import { prisma } from '@/lib/prisma'
 // PUT - Atualizar usuário
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idStr } = await params
+    const id = parseInt(idStr)
     const { nome, username, senha, tipo, ativo } = await request.json()
 
     const data: any = {}
@@ -44,10 +45,11 @@ export async function PUT(
 // DELETE - Desativar usuário
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idStr } = await params
+    const id = parseInt(idStr)
 
     await prisma.usuario.update({
       where: { id },

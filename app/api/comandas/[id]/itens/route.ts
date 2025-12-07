@@ -4,10 +4,11 @@ import { prisma } from '@/lib/prisma'
 // POST - Adicionar item à comanda
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const comandaId = parseInt(params.id)
+    const { id } = await params
+    const comandaId = parseInt(id)
     const { produtoId, quantidade } = await request.json()
 
     // Verificar se comanda está aberta

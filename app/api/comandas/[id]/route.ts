@@ -4,10 +4,11 @@ import { prisma } from '@/lib/prisma'
 // GET - Buscar comanda específica
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idStr } = await params
+    const id = parseInt(idStr)
 
     const comanda = await prisma.comanda.findUnique({
       where: { id },
@@ -51,10 +52,11 @@ export async function GET(
 // PUT - Atualizar comanda (observação, etc)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idStr } = await params
+    const id = parseInt(idStr)
     const { observacao } = await request.json()
 
     const comanda = await prisma.comanda.update({

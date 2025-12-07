@@ -7,17 +7,22 @@ export const revalidate = 0
 // DELETE - Excluir produto
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const produtoId = parseInt(params.id)
+    const { id } = await params
+    const produtoId = parseInt(id)
 
     // Verificar se o produto existe
     const produto = await prisma.produto.findUnique({
       where: { id: produtoId },
       include: {
-        itensPedido: true,
-        itensComanda: true,
+        _count: {
+          select: {
+            itensPedido: true,
+            itensComanda: true,
+          }
+        }
       },
     })
 
@@ -29,7 +34,9 @@ export async function DELETE(
     }
 
     // Verificar se o produto tem dependências
-    if (produto.itensPedido.length > 0 || produto.itensComanda.length > 0) {
+    const temDependencias = produto._count.itensPedido > 0 || produto._count.itensComanda > 0
+
+    if (temDependencias) {
       // Se tem dependências, apenas desativa
       await prisma.produto.update({
         where: { id: produtoId },
@@ -41,7 +48,12 @@ export async function DELETE(
       })
     }
 
-    // Se não tem dependências, pode excluir
+    // Se não tem dependências, excluir movimentações de estoque primeiro
+    await prisma.estoqueMovimentacao.deleteMany({
+      where: { produtoId: produtoId }
+    })
+
+    // Agora pode excluir o produto
     await prisma.produto.delete({
       where: { id: produtoId },
     })
@@ -59,10 +71,11 @@ export async function DELETE(
 // PUT - Atualizar produto
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const produtoId = parseInt(params.id)
+    const { id } = await params
+    const produtoId = parseInt(id)
     const body = await request.json()
 
     const produto = await prisma.produto.update({

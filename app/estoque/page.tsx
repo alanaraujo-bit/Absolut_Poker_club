@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, AlertTriangle, Package, FileDown, Trash2 } from 'lucide-react'
+import { Plus, AlertTriangle, Package, FileDown, Trash2, Edit, X } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,6 +34,7 @@ export default function EstoquePage() {
     estoqueInicial: '',
     estoqueMinimo: '',
   })
+  const [produtoEditando, setProdutoEditando] = useState<Produto | null>(null)
   const [entradaEstoque, setEntradaEstoque] = useState<{ [key: number]: string }>({})
   const { toast } = useToast()
 
@@ -170,6 +171,43 @@ export default function EstoquePage() {
         description: error.message || "Não foi possível excluir o produto",
         variant: "destructive",
       })
+    }
+  }
+
+  async function editarProduto(e: React.FormEvent) {
+    e.preventDefault()
+    if (!produtoEditando) return
+
+    setLoading(true)
+
+    try {
+      const res = await fetch(`/api/produtos/${produtoEditando.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: produtoEditando.nome,
+          precoVenda: Number(produtoEditando.precoVenda),
+          precoCusto: Number(produtoEditando.precoCusto),
+          estoqueMinimo: Number(produtoEditando.estoqueMinimo),
+        }),
+      })
+
+      if (res.ok) {
+        toast({
+          title: "Produto atualizado!",
+          description: `${produtoEditando.nome} foi atualizado com sucesso`,
+        })
+        setProdutoEditando(null)
+        fetchProdutos()
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o produto",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -374,14 +412,24 @@ export default function EstoquePage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => excluirProduto(produto.id, produto.nome)}
-                              title="Excluir produto"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setProdutoEditando(produto)}
+                                title="Editar produto"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => excluirProduto(produto.id, produto.nome)}
+                                title="Excluir produto"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -391,6 +439,107 @@ export default function EstoquePage() {
               </Card>
             </div>
           </div>
+
+          {/* Modal de Edição */}
+          {produtoEditando && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-card rounded-lg shadow-xl max-w-md w-full"
+              >
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Edit className="h-5 w-5" />
+                        Editar Produto
+                      </CardTitle>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setProdutoEditando(null)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <CardDescription>Alterar informações do produto</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={editarProduto} className="space-y-4">
+                      <div>
+                        <Label htmlFor="edit-nome">Nome do Produto</Label>
+                        <Input
+                          id="edit-nome"
+                          value={produtoEditando.nome}
+                          onChange={(e) => setProdutoEditando({ ...produtoEditando, nome: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="edit-precoVenda">Preço de Venda</Label>
+                        <Input
+                          id="edit-precoVenda"
+                          type="number"
+                          step="0.01"
+                          value={produtoEditando.precoVenda}
+                          onChange={(e) => setProdutoEditando({ ...produtoEditando, precoVenda: parseFloat(e.target.value) })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="edit-precoCusto">Preço de Custo</Label>
+                        <Input
+                          id="edit-precoCusto"
+                          type="number"
+                          step="0.01"
+                          value={produtoEditando.precoCusto}
+                          onChange={(e) => setProdutoEditando({ ...produtoEditando, precoCusto: parseFloat(e.target.value) })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="edit-estoqueAtual">Estoque Atual</Label>
+                        <Input
+                          id="edit-estoqueAtual"
+                          type="number"
+                          value={produtoEditando.estoqueAtual}
+                          disabled
+                          className="bg-muted"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Use "Adicionar" na tabela para alterar o estoque
+                        </p>
+                      </div>
+                      <div>
+                        <Label htmlFor="edit-estoqueMinimo">Estoque Mínimo</Label>
+                        <Input
+                          id="edit-estoqueMinimo"
+                          type="number"
+                          value={produtoEditando.estoqueMinimo}
+                          onChange={(e) => setProdutoEditando({ ...produtoEditando, estoqueMinimo: parseInt(e.target.value) })}
+                          required
+                        />
+                      </div>
+                      <div className="flex gap-2 pt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setProdutoEditando(null)}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button type="submit" className="flex-1" disabled={loading}>
+                          {loading ? 'Salvando...' : 'Salvar Alterações'}
+                        </Button>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+          )}
         </div>
       </main>
     </div>
