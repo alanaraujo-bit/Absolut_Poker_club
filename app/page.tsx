@@ -39,9 +39,15 @@ export default function Home() {
 
   async function fetchStats() {
     try {
-      const res = await fetch('/api/dashboard/stats')
+      const res = await fetch('/api/dashboard/stats', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
       if (res.ok) {
         const data = await res.json()
+        console.log('📊 Dashboard atualizado:', data)
         setStats(data)
       }
     } catch (error) {

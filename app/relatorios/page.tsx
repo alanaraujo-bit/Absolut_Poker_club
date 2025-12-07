@@ -52,9 +52,9 @@ export default function RelatoriosPage() {
   async function fetchRelatorios() {
     try {
       const [vendasRes, topRes, pedidosRes] = await Promise.all([
-        fetch('/api/relatorios/vendas'),
-        fetch('/api/relatorios/top-produtos'),
-        fetch('/api/relatorios/pedidos-recentes'),
+        fetch('/api/relatorios/vendas', { cache: 'no-store' }),
+        fetch('/api/relatorios/top-produtos', { cache: 'no-store' }),
+        fetch('/api/relatorios/pedidos-recentes', { cache: 'no-store' }),
       ])
 
       if (vendasRes.ok) {

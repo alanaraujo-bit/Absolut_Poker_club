@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
+    console.log('🔄 API Dashboard Stats chamada:', new Date().toLocaleTimeString())
+    
     const hoje = new Date()
     hoje.setHours(0, 0, 0, 0)
 
@@ -73,12 +75,16 @@ export async function GET() {
       },
     })
 
-    return NextResponse.json({
+    const resultado = {
       totalVendidoHoje: totalGeralHoje,
       totalPedidosHoje,
       produtoMaisVendido,
       estoquesBaixos,
-    })
+    }
+    
+    console.log('📤 Retornando stats:', resultado)
+
+    return NextResponse.json(resultado)
   } catch (error) {
     console.error('Erro ao buscar estatísticas:', error)
     return NextResponse.json({ error: 'Erro ao buscar estatísticas' }, { status: 500 })
