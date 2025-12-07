@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { TrendingUp, ShoppingBag, Package, AlertTriangle, LayoutDashboard } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import Sidebar from '@/components/sidebar'
 import PageHeader from '@/components/page-header'
