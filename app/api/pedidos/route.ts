@@ -58,28 +58,6 @@ export async function POST(request: Request) {
         }
       }
 
-      // Se tem cliente e não foi pago à vista, registrar débito
-      if (clienteId && !pago) {
-        await tx.movimentacaoCliente.create({
-          data: {
-            clienteId,
-            tipo: 'debito',
-            valor: parseFloat(valorTotal.toString()),
-            descricao: `Pedido #${pedido.id}`,
-          },
-        })
-
-        // Atualizar saldo do cliente (negativo = deve)
-        await tx.cliente.update({
-          where: { id: clienteId },
-          data: {
-            saldo: {
-              decrement: parseFloat(valorTotal.toString())
-            }
-          }
-        })
-      }
-
       return pedido
     })
 
@@ -98,7 +76,6 @@ export async function GET() {
       },
       take: 50,
       include: {
-        cliente: true,
         itens: {
           include: {
             produto: true,
@@ -107,9 +84,24 @@ export async function GET() {
       },
     })
 
-    return NextResponse.json(pedidos)
+    // Converter Decimal para Number
+    const pedidosFormatados = pedidos.map(pedido => ({
+      ...pedido,
+      valorTotal: Number(pedido.valorTotal),
+      itens: pedido.itens.map(item => ({
+        ...item,
+        precoUnitario: Number(item.precoUnitario),
+        subtotal: Number(item.subtotal),
+        produto: {
+          ...item.produto,
+          precoVenda: Number(item.produto.precoVenda),
+          precoCusto: Number(item.produto.precoCusto),
+        }
+      }))
+    }))
+
+    return NextResponse.json(pedidosFormatados)
   } catch (error) {
-    console.error('Erro ao buscar pedidos:', error)
     return NextResponse.json({ error: 'Erro ao buscar pedidos' }, { status: 500 })
   }
 }
