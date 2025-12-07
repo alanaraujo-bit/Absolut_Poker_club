@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Desabilita cache para esta rota
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function GET() {
   try {
     const hoje = new Date()
@@ -84,6 +88,12 @@ export async function GET() {
       hoje: vendasHoje,
       semana: vendasSemana,
       mes: vendasMes,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
     })
   } catch (error) {
     console.error('Erro ao buscar relatório de vendas:', error)
