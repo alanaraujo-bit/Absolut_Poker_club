@@ -25,8 +25,11 @@ interface ProdutoMaisVendido {
 
 interface PedidoRecente {
   id: number
-  dataPedido: string
+  dataFechamento: string
   valorTotal: number
+  cliente: {
+    nome: string
+  }
 }
 
 export default function RelatoriosPage() {
@@ -93,7 +96,8 @@ export default function RelatoriosPage() {
       pedidosRecentes: pedidosRecentes.map(p => ({
         id: p.id,
         total: p.valorTotal,
-        createdAt: p.dataPedido
+        createdAt: p.dataFechamento,
+        cliente: p.cliente.nome
       })),
       totalGeral: vendas.mes,
       totalPedidos: pedidosRecentes.length
@@ -103,59 +107,49 @@ export default function RelatoriosPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
       
-      <main className="flex-1 lg:ml-80 p-8">
-        <div className="max-w-7xl mx-auto">
-          <PageHeader 
-            title="Relatórios"
-            description="Análise de vendas e performance"
-            icon={BarChart3}
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold gold-text mb-2">Relatórios</h1>
-                <p className="text-muted-foreground">Análise de vendas e desempenho</p>
-              </div>
-              <Button 
-                onClick={handleExportPDF}
-                size="lg"
-                className="gap-2"
-              >
-                <FileDown className="h-5 w-5" />
-                Exportar PDF
-              </Button>
-            </div>
-          </motion.div>
+      <main className="flex-1 lg:ml-72 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
+        <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <PageHeader 
+              title="Relatórios"
+              description="Análise de vendas e performance"
+              icon={BarChart3}
+            />
+            <Button 
+              onClick={handleExportPDF}
+              size="sm"
+              className="gap-2 btn-poker-primary w-full sm:w-auto"
+            >
+              <FileDown className="h-4 w-4" />
+              <span className="hidden sm:inline">Exportar PDF</span>
+              <span className="sm:hidden">PDF</span>
+            </Button>
+          </div>
 
-          {/* Cards de Resumo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Cards de Resumo - Mobile optimized */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 lg:gap-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <Card>
-                <CardHeader className="pb-3">
+              <Card className="poker-card">
+                <CardHeader className="pb-2 px-4 pt-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
                       Vendas Hoje
                     </CardTitle>
-                    <Calendar className="h-5 w-5 text-pink-500" />
+                    <Calendar className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 pb-4">
                   {loading ? (
-                    <div className="h-8 bg-white/5 rounded animate-pulse" />
+                    <div className="h-7 md:h-8 bg-primary/5 rounded animate-pulse" />
                   ) : (
-                    <div className="text-3xl font-bold gradient-primary bg-clip-text text-transparent">
+                    <div className="text-2xl md:text-3xl font-bold gold-text">
                       {formatCurrency(vendas.hoje)}
                     </div>
                   )}
@@ -168,20 +162,20 @@ export default function RelatoriosPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Card>
-                <CardHeader className="pb-3">
+              <Card className="poker-card">
+                <CardHeader className="pb-2 px-4 pt-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
                       Vendas na Semana
                     </CardTitle>
-                    <TrendingUp className="h-5 w-5 text-purple-500" />
+                    <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 pb-4">
                   {loading ? (
-                    <div className="h-8 bg-white/5 rounded animate-pulse" />
+                    <div className="h-7 md:h-8 bg-primary/5 rounded animate-pulse" />
                   ) : (
-                    <div className="text-3xl font-bold gradient-primary bg-clip-text text-transparent">
+                    <div className="text-2xl md:text-3xl font-bold gold-text">
                       {formatCurrency(vendas.semana)}
                     </div>
                   )}
@@ -193,21 +187,22 @@ export default function RelatoriosPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
+              className="sm:col-span-2 lg:col-span-1"
             >
-              <Card>
-                <CardHeader className="pb-3">
+              <Card className="poker-card">
+                <CardHeader className="pb-2 px-4 pt-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
                       Vendas no Mês
                     </CardTitle>
-                    <BarChart3 className="h-5 w-5 text-blue-500" />
+                    <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 pb-4">
                   {loading ? (
-                    <div className="h-8 bg-white/5 rounded animate-pulse" />
+                    <div className="h-7 md:h-8 bg-primary/5 rounded animate-pulse" />
                   ) : (
-                    <div className="text-3xl font-bold gradient-primary bg-clip-text text-transparent">
+                    <div className="text-2xl md:text-3xl font-bold gold-text">
                       {formatCurrency(vendas.mes)}
                     </div>
                   )}
@@ -216,39 +211,34 @@ export default function RelatoriosPage() {
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Gráfico de Vendas */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Evolução de Vendas</CardTitle>
-                  <CardDescription>Faturamento por período</CardDescription>
+              <Card className="poker-card">
+                <CardHeader className="px-4 pt-4 pb-3">
+                  <CardTitle className="text-base md:text-lg">Evolução de Vendas</CardTitle>
+                  <CardDescription className="text-xs md:text-sm">Faturamento por período</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                <CardContent className="px-2 md:px-4 pb-4">
+                  <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={vendasData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                      <XAxis dataKey="name" stroke="#888" />
-                      <YAxis stroke="#888" />
+                      <XAxis dataKey="name" stroke="#888" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#888" style={{ fontSize: '12px' }} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: '#1a1a1a',
-                          border: '1px solid #333',
+                          border: '1px solid #D4AF37',
                           borderRadius: '8px',
+                          fontSize: '12px'
                         }}
                         formatter={(value: any) => formatCurrency(Number(value))}
                       />
-                      <Bar dataKey="valor" fill="url(#gradient)" radius={[8, 8, 0, 0]} />
-                      <defs>
-                        <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#E1306C" />
-                          <stop offset="100%" stopColor="#8134AF" />
-                        </linearGradient>
-                      </defs>
+                      <Bar dataKey="valor" fill="#D4AF37" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -261,35 +251,35 @@ export default function RelatoriosPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Produtos Mais Vendidos
+              <Card className="poker-card">
+                <CardHeader className="px-4 pt-4 pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                    <Package className="h-4 w-4 md:h-5 md:w-5" />
+                    Top Produtos
                   </CardTitle>
-                  <CardDescription>Top 5 produtos do mês</CardDescription>
+                  <CardDescription className="text-xs md:text-sm">Mais vendidos do mês</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="px-4 pb-4">
+                  <div className="space-y-3">
                     {topProdutos.slice(0, 5).map((produto, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                      <div key={index} className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                           <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white"
+                            className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center font-bold text-black text-sm md:text-base shrink-0"
                             style={{
                               background: `linear-gradient(135deg, ${COLORS[index % COLORS.length]}, ${COLORS[(index + 1) % COLORS.length]})`,
                             }}
                           >
                             {index + 1}
                           </div>
-                          <div>
-                            <div className="font-medium">{produto.nome}</div>
-                            <div className="text-sm text-muted-foreground">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm md:text-base truncate">{produto.nome}</div>
+                            <div className="text-xs text-muted-foreground">
                               {produto.quantidade} vendidos
                             </div>
                           </div>
                         </div>
-                        <div className="font-bold">{formatCurrency(produto.total)}</div>
+                        <div className="font-bold text-sm md:text-base gold-text shrink-0">{formatCurrency(produto.total)}</div>
                       </div>
                     ))}
                   </div>
@@ -304,25 +294,26 @@ export default function RelatoriosPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
           >
-            <Card>
-              <CardHeader>
-                <CardTitle>Pedidos Recentes</CardTitle>
-                <CardDescription>Últimos 10 pedidos realizados</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <Card className="poker-card">
+                <CardHeader className="px-4 pt-4 pb-3">
+                  <CardTitle className="text-base md:text-lg">Comandas Recentes</CardTitle>
+                  <CardDescription className="text-xs md:text-sm">Últimas 10 comandas fechadas</CardDescription>
+                </CardHeader>
+              <CardContent className="px-4 pb-4">
+                <div className="space-y-2 md:space-y-3">
                   {pedidosRecentes.map((pedido) => (
                     <div
                       key={pedido.id}
-                      className="flex items-center justify-between p-4 rounded-lg glass-effect neon-border"
+                      className="flex items-center justify-between p-3 md:p-4 rounded-lg glass-poker border border-primary/20"
                     >
                       <div>
-                        <div className="font-medium">Pedido #{pedido.id}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatDate(new Date(pedido.dataPedido))}
+                        <div className="font-medium text-sm md:text-base">Comanda #{pedido.id}</div>
+                        <div className="text-xs text-muted-foreground">{pedido.cliente.nome}</div>
+                        <div className="text-xs md:text-sm text-muted-foreground">
+                          {pedido.dataFechamento ? formatDate(new Date(pedido.dataFechamento)) : '-'}
                         </div>
                       </div>
-                      <div className="text-lg font-bold gradient-primary bg-clip-text text-transparent">
+                      <div className="text-base md:text-lg font-bold gold-text">
                         {formatCurrency(Number(pedido.valorTotal))}
                       </div>
                     </div>

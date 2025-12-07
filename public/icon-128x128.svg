@@ -1,0 +1,25 @@
+
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F2314;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1A3A1F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#B8960C;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#D4AF37;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFD700;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="128" height="128" fill="url(#grad1)"/>
+  <rect x="5.12" y="5.12" width="117.76" height="117.76" rx="10.24" fill="none" stroke="url(#goldGrad)" stroke-width="1.024" opacity="0.6"/>
+  
+  <g transform="translate(64, 64)">
+    <path d="M 0,-29.44 C -12.8,-24.32 -20.48,-15.36 -20.48,-5.12 C -20.48,5.12 -12.8,12.8 0,12.8 C 12.8,12.8 20.48,5.12 20.48,-5.12 C 20.48,-15.36 12.8,-24.32 0,-29.44 Z" 
+          fill="url(#goldGrad)" stroke="url(#goldGrad)" stroke-width="0.768"/>
+    <rect x="-3.84" y="10.24" width="7.68" height="15.36" rx="2.048" fill="url(#goldGrad)"/>
+  </g>
+  
+  
+</svg>

@@ -2,78 +2,73 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   LayoutDashboard, 
-  ShoppingCart, 
   Package, 
   BarChart3,
   Users,
   Menu, 
-  X 
+  X,
+  LogOut,
+  UserCog
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/lib/auth-context'
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Novo Pedido', href: '/pedidos', icon: ShoppingCart },
-  { name: 'Clientes', href: '/clientes', icon: Users },
-  { name: 'Estoque', href: '/estoque', icon: Package },
-  { name: 'Relatórios', href: '/relatorios', icon: BarChart3 },
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard, label: 'Home' },
+  { name: 'Clientes', href: '/clientes', icon: Users, label: 'Clientes' },
+  { name: 'Estoque', href: '/estoque', icon: Package, label: 'Estoque' },
+  { name: 'Relatórios', href: '/relatorios', icon: BarChart3, label: 'Dados' },
+]
+
+const navigationAdmin = [
+  { name: 'Usuários', href: '/usuarios', icon: UserCog, label: 'Usuários' },
 ]
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const { usuario, logout, isAdmin } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsOpen(false)
+  }, [pathname])
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg glass-effect neon-border"
-      >
-        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </button>
-
-      {/* Backdrop */}
-      {isOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{ x: isOpen ? 0 : -320 }}
-        className={`
-          fixed top-0 left-0 h-screen w-80 
-          glass-effect border-r border-white/10
-          p-6 z-40 lg:translate-x-0 transition-transform
-        `}
-      >
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-72 glass-poker border-r border-primary/20 p-6 z-40 flex-col">
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="mb-8 space-y-3">
+          <Link href="/" className="mb-8 space-y-3 group">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full border-2 border-absolut-gold flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full neon-border-gold flex items-center justify-center transition-all group-hover:neon-glow-gold">
                 <span className="text-2xl">♠️</span>
               </div>
               <div>
                 <h1 className="text-2xl font-bold gold-text">
                   Absolut Poker
                 </h1>
-                <p className="text-xs text-absolut-gold/80 font-semibold">
+                <p className="text-xs text-primary/80 font-semibold">
                   ACATH
                 </p>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground border-t border-white/10 pt-2">
+            <p className="text-xs text-muted-foreground border-t border-primary/20 pt-2">
               Canaã dos Carajás - PA
             </p>
-          </div>
+          </Link>
 
           {/* Navigation */}
           <nav className="flex-1 space-y-2">
@@ -82,45 +77,123 @@ export default function Sidebar() {
               const Icon = item.icon
               
               return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                >
+                <Link key={item.name} href={item.href}>
                   <motion.div
                     whileHover={{ scale: 1.02, x: 4 }}
                     whileTap={{ scale: 0.98 }}
                     className={`
-                      flex items-center gap-3 px-4 py-3 rounded-lg
-                      transition-all cursor-pointer
+                      flex items-center gap-3 px-4 py-3.5 rounded-lg
+                      transition-all cursor-pointer touch-feedback
                       ${isActive 
-                        ? 'gradient-primary text-white neon-glow' 
-                        : 'hover:bg-white/5 text-muted-foreground hover:text-foreground'
+                        ? 'gradient-poker-gold text-black shadow-lg font-semibold' 
+                        : 'hover:bg-primary/10 text-muted-foreground hover:text-foreground'
                       }
                     `}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-5 w-5 shrink-0" />
                     <span className="font-medium">{item.name}</span>
                   </motion.div>
                 </Link>
               )
             })}
+
+            {/* Apenas para Admin */}
+            {isAdmin && (
+              <>
+                <div className="pt-4 pb-2">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider px-4">Administração</p>
+                </div>
+                {navigationAdmin.map((item) => {
+                  const isActive = pathname === item.href
+                  const Icon = item.icon
+                  
+                  return (
+                    <Link key={item.name} href={item.href}>
+                      <motion.div
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`
+                          flex items-center gap-3 px-4 py-3.5 rounded-lg
+                          transition-all cursor-pointer touch-feedback
+                          ${isActive 
+                            ? 'gradient-poker-gold text-black shadow-lg font-semibold' 
+                            : 'hover:bg-primary/10 text-muted-foreground hover:text-foreground'
+                          }
+                        `}
+                      >
+                        <Icon className="h-5 w-5 shrink-0" />
+                        <span className="font-medium">{item.name}</span>
+                      </motion.div>
+                    </Link>
+                  )
+                })}
+              </>
+            )}
           </nav>
 
           {/* Footer Info */}
-          <div className="pt-6 border-t border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full border-2 border-absolut-gold flex items-center justify-center">
-                <span className="text-absolut-gold font-bold text-lg">👑</span>
+          <div className="pt-6 border-t border-primary/20 space-y-3">
+            <div className="flex items-center gap-3 poker-card p-3">
+              <div className="w-10 h-10 rounded-full neon-border-gold flex items-center justify-center">
+                <span className="text-primary text-lg">👤</span>
               </div>
-              <div>
-                <p className="text-sm font-medium gold-text">Absolut Club</p>
-                <p className="text-xs text-muted-foreground">Sistema de Gestão</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold gold-text truncate">{usuario?.nome}</p>
+                <p className="text-xs text-muted-foreground capitalize">{usuario?.tipo}</p>
               </div>
             </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={logout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-all"
+            >
+              <LogOut className="h-5 w-5" />
+              <span className="font-medium">Sair</span>
+            </motion.button>
           </div>
         </div>
-      </motion.aside>
+      </aside>
+
+      {/* Mobile Bottom Navigation - APENAS ESTE NO MOBILE */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 glass-dark border-t border-primary/20 z-40 safe-area-inset-bottom">
+        <div className="grid grid-cols-5 gap-0">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href
+            const Icon = item.icon
+            
+            return (
+              <Link key={item.name} href={item.href}>
+                <motion.div
+                  whileTap={{ scale: 0.92 }}
+                  className={`
+                    flex flex-col items-center justify-center gap-1 py-3 px-2
+                    transition-all touch-feedback min-h-[68px]
+                    ${isActive 
+                      ? 'text-primary' 
+                      : 'text-muted-foreground active:text-foreground'
+                    }
+                  `}
+                >
+                  <div className={`
+                    p-2 rounded-xl transition-all
+                    ${isActive 
+                      ? 'bg-primary/20' 
+                      : 'bg-transparent'
+                    }
+                  `}>
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
+                  </div>
+                  <span className={`text-[10px] font-semibold leading-tight text-center ${isActive ? 'gold-text' : ''}`}>
+                    {item.label}
+                  </span>
+                </motion.div>
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
     </>
   )
 }

@@ -10,6 +10,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Usuario {
+  id              Int       @id @default(autoincrement())
+  nome            String
+  username        String    @unique
+  senha           String    // Armazenada com hash
+  tipo            String    // 'admin' ou 'garcom'
+  ativo           Boolean   @default(true)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("usuarios")
+}
+
 model Produto {
   id                     Int                     @id @default(autoincrement())
   nome                   String
@@ -23,6 +36,7 @@ model Produto {
   
   movimentacoes          EstoqueMovimentacao[]
   itensPedido            ItemPedido[]
+  itensComanda           ItemComanda[]
 
   @@map("produtos")
 }
@@ -43,16 +57,47 @@ model EstoqueMovimentacao {
 model Cliente {
   id              Int          @id @default(autoincrement())
   nome            String
+  cpf             String?      @unique
   telefone        String?
-  saldo           Decimal      @default(0) @db.Decimal(10, 2)  // negativo = deve, positivo = crédito
   ativo           Boolean      @default(true)
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
   
-  pedidos         Pedido[]
-  movimentacoes   MovimentacaoCliente[]
+  comandas        Comanda[]
 
   @@map("clientes")
+}
+
+model Comanda {
+  id              Int       @id @default(autoincrement())
+  clienteId       Int       @map("cliente_id")
+  garcomId        Int?      @map("garcom_id")  // quem abriu a comanda
+  status          String    @default("aberta") // 'aberta' ou 'fechada'
+  dataAbertura    DateTime  @default(now()) @map("data_abertura")
+  dataFechamento  DateTime? @map("data_fechamento")
+  valorTotal      Decimal   @default(0) @map("valor_total") @db.Decimal(10, 2)
+  formaPagamento  String?   @map("forma_pagamento") // 'dinheiro', 'pix', 'cartao', etc
+  observacao      String?
+  
+  cliente         Cliente   @relation(fields: [clienteId], references: [id])
+  itens           ItemComanda[]
+
+  @@map("comandas")
+}
+
+model ItemComanda {
+  id              Int       @id @default(autoincrement())
+  comandaId       Int       @map("comanda_id")
+  produtoId       Int       @map("produto_id")
+  quantidade      Int
+  precoUnitario   Decimal   @map("preco_unitario") @db.Decimal(10, 2)
+  subtotal        Decimal   @db.Decimal(10, 2)
+  dataHora        DateTime  @default(now()) @map("data_hora")
+  
+  comanda         Comanda   @relation(fields: [comandaId], references: [id])
+  produto         Produto   @relation(fields: [produtoId], references: [id])
+
+  @@map("itens_comanda")
 }
 
 model Pedido {
@@ -60,25 +105,11 @@ model Pedido {
   clienteId    Int?         @map("cliente_id")
   dataPedido   DateTime     @default(now()) @map("data_pedido")
   valorTotal   Decimal      @map("valor_total") @db.Decimal(10, 2)
-  pago         Boolean      @default(false)  // se foi pago à vista ou não
+  pago         Boolean      @default(false)
   
-  cliente      Cliente?     @relation(fields: [clienteId], references: [id])
   itens        ItemPedido[]
 
   @@map("pedidos")
-}
-
-model MovimentacaoCliente {
-  id              Int       @id @default(autoincrement())
-  clienteId       Int       @map("cliente_id")
-  tipo            String    // 'debito' (comprou fiado) ou 'credito' (pagou)
-  valor           Decimal   @db.Decimal(10, 2)
-  descricao       String
-  dataMovimento   DateTime  @default(now()) @map("data_movimento")
-  
-  cliente         Cliente   @relation(fields: [clienteId], references: [id])
-
-  @@map("movimentacoes_clientes")
 }
 
 model ItemPedido {

@@ -1,0 +1,30 @@
+
+<svg width="384" height="384" viewBox="0 0 384 384" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F2314;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1A3A1F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#B8960C;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#D4AF37;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFD700;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="384" height="384" fill="url(#grad1)"/>
+  <rect x="15.36" y="15.36" width="353.28000000000003" height="353.28000000000003" rx="30.72" fill="none" stroke="url(#goldGrad)" stroke-width="3.072" opacity="0.6"/>
+  
+  <g transform="translate(192, 192)">
+    <path d="M 0,-88.32000000000001 C -38.400000000000006,-72.96000000000001 -61.44,-46.08 -61.44,-15.36 C -61.44,15.36 -38.400000000000006,38.400000000000006 0,38.400000000000006 C 38.400000000000006,38.400000000000006 61.44,15.36 61.44,-15.36 C 61.44,-46.08 38.400000000000006,-72.96000000000001 0,-88.32000000000001 Z" 
+          fill="url(#goldGrad)" stroke="url(#goldGrad)" stroke-width="2.3040000000000003"/>
+    <rect x="-11.52" y="30.72" width="23.04" height="46.08" rx="6.144" fill="url(#goldGrad)"/>
+  </g>
+  
+  
+  <text x="192" y="314.88" font-family="Arial, sans-serif" font-size="34.56" font-weight="bold" 
+        fill="url(#goldGrad)" text-anchor="middle">ACATH</text>
+  <text x="192" y="345.6" font-family="Arial, sans-serif" font-size="18.048000000000002" 
+        fill="#D4AF37" text-anchor="middle" opacity="0.8">Absolut Poker</text>
+  
+</svg>

@@ -7,11 +7,12 @@ export async function GET() {
     inicioMes.setDate(1)
     inicioMes.setHours(0, 0, 0, 0)
 
-    // Buscar itens de pedidos do mês
-    const itens = await prisma.itemPedido.findMany({
+    // Buscar itens de comandas fechadas do mês
+    const itens = await prisma.itemComanda.findMany({
       where: {
-        pedido: {
-          dataPedido: {
+        comanda: {
+          status: 'fechada',
+          dataFechamento: {
             gte: inicioMes,
           },
         },

@@ -3,6 +3,21 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
+  // Usuário admin padrão
+  console.log('👤 Criando usuário admin...')
+  await prisma.usuario.upsert({
+    where: { username: 'admin' },
+    update: {},
+    create: {
+      nome: 'Administrador',
+      username: 'admin',
+      senha: Buffer.from('admin123').toString('base64'), // Senha: admin123
+      tipo: 'admin',
+      ativo: true,
+    },
+  })
+  console.log('✅ Usuário admin criado (username: admin, senha: admin123)')
+
   // Produtos de exemplo para um bar/poker club
   const produtos = [
     { nome: 'Cerveja Heineken', precoVenda: 12.00, precoCusto: 6.00, estoqueAtual: 50, estoqueMinimo: 20 },

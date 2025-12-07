@@ -9,8 +9,8 @@ export async function GET(
     const cliente = await prisma.cliente.findUnique({
       where: { id: parseInt(params.id) },
       include: {
-        pedidos: {
-          orderBy: { dataPedido: 'desc' },
+        comandas: {
+          orderBy: { dataAbertura: 'desc' },
           take: 10,
           include: {
             itens: {
@@ -19,10 +19,6 @@ export async function GET(
               }
             }
           }
-        },
-        movimentacoes: {
-          orderBy: { dataMovimento: 'desc' },
-          take: 20
         }
       }
     })
@@ -43,13 +39,14 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const { nome, telefone, ativo } = body
+    const { nome, telefone, cpf, ativo } = body
 
     const cliente = await prisma.cliente.update({
       where: { id: parseInt(params.id) },
       data: {
         nome,
         telefone,
+        cpf,
         ativo
       }
     })

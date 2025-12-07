@@ -11,39 +11,42 @@ export async function GET() {
 
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
 
-    // Vendas de hoje
-    const pedidosHoje = await prisma.pedido.findMany({
+    // Vendas de hoje (comandas fechadas)
+    const comandasHoje = await prisma.comanda.findMany({
       where: {
-        dataPedido: { gte: hoje },
+        status: 'fechada',
+        dataFechamento: { gte: hoje },
       },
     })
 
-    const vendasHoje = pedidosHoje.reduce(
-      (sum, pedido) => sum + Number(pedido.valorTotal),
+    const vendasHoje = comandasHoje.reduce(
+      (sum, comanda) => sum + Number(comanda.valorTotal),
       0
     )
 
     // Vendas da semana
-    const pedidosSemana = await prisma.pedido.findMany({
+    const comandasSemana = await prisma.comanda.findMany({
       where: {
-        dataPedido: { gte: inicioSemana },
+        status: 'fechada',
+        dataFechamento: { gte: inicioSemana },
       },
     })
 
-    const vendasSemana = pedidosSemana.reduce(
-      (sum, pedido) => sum + Number(pedido.valorTotal),
+    const vendasSemana = comandasSemana.reduce(
+      (sum, comanda) => sum + Number(comanda.valorTotal),
       0
     )
 
     // Vendas do mês
-    const pedidosMes = await prisma.pedido.findMany({
+    const comandasMes = await prisma.comanda.findMany({
       where: {
-        dataPedido: { gte: inicioMes },
+        status: 'fechada',
+        dataFechamento: { gte: inicioMes },
       },
     })
 
-    const vendasMes = pedidosMes.reduce(
-      (sum, pedido) => sum + Number(pedido.valorTotal),
+    const vendasMes = comandasMes.reduce(
+      (sum, comanda) => sum + Number(comanda.valorTotal),
       0
     )
 

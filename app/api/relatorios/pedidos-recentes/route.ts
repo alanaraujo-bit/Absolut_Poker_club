@@ -3,16 +3,26 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    const pedidos = await prisma.pedido.findMany({
+    const comandas = await prisma.comanda.findMany({
+      where: {
+        status: 'fechada'
+      },
       orderBy: {
-        dataPedido: 'desc',
+        dataFechamento: 'desc',
       },
       take: 10,
+      include: {
+        cliente: {
+          select: {
+            nome: true
+          }
+        }
+      }
     })
 
-    return NextResponse.json(pedidos)
+    return NextResponse.json(comandas)
   } catch (error) {
-    console.error('Erro ao buscar pedidos recentes:', error)
-    return NextResponse.json({ error: 'Erro ao buscar pedidos' }, { status: 500 })
+    console.error('Erro ao buscar comandas recentes:', error)
+    return NextResponse.json({ error: 'Erro ao buscar comandas' }, { status: 500 })
   }
 }

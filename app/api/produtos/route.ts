@@ -12,7 +12,14 @@ export async function GET() {
       },
     })
 
-    return NextResponse.json(produtos)
+    // Converter Decimal para number
+    const produtosFormatados = produtos.map(p => ({
+      ...p,
+      precoVenda: Number(p.precoVenda),
+      precoCusto: Number(p.precoCusto),
+    }))
+
+    return NextResponse.json(produtosFormatados)
   } catch (error) {
     console.error('Erro ao buscar produtos:', error)
     return NextResponse.json({ error: 'Erro ao buscar produtos' }, { status: 500 })

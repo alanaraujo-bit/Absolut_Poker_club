@@ -6,24 +6,25 @@ export async function GET() {
     const hoje = new Date()
     hoje.setHours(0, 0, 0, 0)
 
-    // Total vendido hoje
-    const pedidosHoje = await prisma.pedido.findMany({
+    // Total vendido hoje (comandas fechadas)
+    const comandasHoje = await prisma.comanda.findMany({
       where: {
-        dataPedido: {
+        status: 'fechada',
+        dataFechamento: {
           gte: hoje,
         },
       },
     })
 
-    const totalVendidoHoje = pedidosHoje.reduce(
-      (sum, pedido) => sum + Number(pedido.valorTotal),
+    const totalVendidoHoje = comandasHoje.reduce(
+      (sum, comanda) => sum + Number(comanda.valorTotal),
       0
     )
 
-    const totalPedidosHoje = pedidosHoje.length
+    const totalPedidosHoje = comandasHoje.length
 
-    // Produto mais vendido (geral)
-    const itensMaisVendidos = await prisma.itemPedido.groupBy({
+    // Produto mais vendido (geral, de todas as comandas)
+    const itensMaisVendidos = await prisma.itemComanda.groupBy({
       by: ['produtoId'],
       _sum: {
         quantidade: true,
