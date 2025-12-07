@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 // GET - Listar todos os usuários
 export async function GET() {
   try {
-    const usuarios = await prisma.Usuario.findMany({
+    const usuarios = await prisma.usuario.findMany({
       select: {
         id: true,
         nome: true,
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     // Verificar se username já existe
-    const existente = await prisma.Usuario.findUnique({
+    const existente = await prisma.usuario.findUnique({
       where: { username },
     })
 
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     // Hash da senha (em produção, use bcrypt)
     const senhaHash = Buffer.from(senha).toString('base64')
 
-    const usuario = await prisma.Usuario.create({
+    const usuario = await prisma.usuario.create({
       data: {
         nome,
         username,
