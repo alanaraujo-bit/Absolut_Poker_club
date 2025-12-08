@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, AlertTriangle, Package, FileDown, Trash2, Edit, X, ArrowLeft } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -220,205 +220,235 @@ export default function EstoquePage() {
 
   const produtosComEstoqueBaixo = produtos.filter(p => p.estoqueAtual <= p.estoqueMinimo)
 
+  // Handlers estáveis
+  const handleNovoProdutoChange = useCallback((field: string, value: string) => {
+    setNovoProduto(prev => ({ ...prev, [field]: value }))
+  }, [])
+
+  const handleCloseModal = useCallback(() => {
+    setMostrarFormulario(false)
+  }, [])
+
+  const handleCloseProdutoEditando = useCallback(() => {
+    setProdutoEditando(null)
+  }, [])
+
   // Componente de Modal Novo Produto (Reutilizável)
-  const ModalNovoProduto = () => (
-    <div 
-      className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
-      onClick={() => setMostrarFormulario(false)}
-    >
-      <div
-        className="bg-card rounded-t-3xl sm:rounded-xl shadow-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+  const ModalNovoProduto = useMemo(() => {
+    if (!mostrarFormulario) return null
+    
+    return (
+      <div 
+        className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+        onClick={handleCloseModal}
       >
-        <div className="sticky top-0 glass-dark border-b border-primary/20 p-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-xl">
-          <div className="flex items-center gap-2">
-            <Plus className="h-5 w-5 text-primary" />
-            <h2 className="font-bold gold-text">Novo Produto</h2>
-          </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setMostrarFormulario(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-        <form onSubmit={criarProduto} className="p-4 space-y-4">
-          <div>
-            <Label htmlFor="nome">Nome do Produto</Label>
-            <Input
-              id="nome"
-              value={novoProduto.nome}
-              onChange={(e) => setNovoProduto({ ...novoProduto, nome: e.target.value })}
-              required
-              placeholder="Ex: Cerveja Heineken"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="precoVenda">Preço de Venda</Label>
-              <Input
-                id="precoVenda"
-                type="number"
-                step="0.01"
-                value={novoProduto.precoVenda}
-                onChange={(e) => setNovoProduto({ ...novoProduto, precoVenda: e.target.value })}
-                required
-                placeholder="0.00"
-              />
+        <div
+          className="bg-card rounded-t-3xl sm:rounded-xl shadow-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="sticky top-0 glass-dark border-b border-primary/20 p-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-xl">
+            <div className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" />
+              <h2 className="font-bold gold-text">Novo Produto</h2>
             </div>
-            <div>
-              <Label htmlFor="precoCusto">Preço de Custo</Label>
-              <Input
-                id="precoCusto"
-                type="number"
-                step="0.01"
-                value={novoProduto.precoCusto}
-                onChange={(e) => setNovoProduto({ ...novoProduto, precoCusto: e.target.value })}
-                required
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="estoqueInicial">Estoque Inicial</Label>
-              <Input
-                id="estoqueInicial"
-                type="number"
-                value={novoProduto.estoqueInicial}
-                onChange={(e) => setNovoProduto({ ...novoProduto, estoqueInicial: e.target.value })}
-                required
-                placeholder="0"
-              />
-            </div>
-            <div>
-              <Label htmlFor="estoqueMinimo">Estoque Mínimo</Label>
-              <Input
-                id="estoqueMinimo"
-                type="number"
-                value={novoProduto.estoqueMinimo}
-                onChange={(e) => setNovoProduto({ ...novoProduto, estoqueMinimo: e.target.value })}
-                required
-                placeholder="0"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2 pt-4">
             <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => setMostrarFormulario(false)}
+              size="sm"
+              variant="ghost"
+              onClick={handleCloseModal}
             >
-              Cancelar
-            </Button>
-            <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? 'Cadastrando...' : 'Cadastrar'}
+              <X className="h-4 w-4" />
             </Button>
           </div>
-        </form>
+          <form onSubmit={criarProduto} className="p-4 space-y-4">
+            <div>
+              <Label htmlFor="nome">Nome do Produto</Label>
+              <Input
+                id="nome"
+                value={novoProduto.nome}
+                onChange={(e) => handleNovoProdutoChange('nome', e.target.value)}
+                required
+                placeholder="Ex: Cerveja Heineken"
+                autoComplete="off"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="precoVenda">Preço de Venda</Label>
+                <Input
+                  id="precoVenda"
+                  type="number"
+                  step="0.01"
+                  value={novoProduto.precoVenda}
+                  onChange={(e) => handleNovoProdutoChange('precoVenda', e.target.value)}
+                  required
+                  placeholder="0.00"
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <Label htmlFor="precoCusto">Preço de Custo</Label>
+                <Input
+                  id="precoCusto"
+                  type="number"
+                  step="0.01"
+                  value={novoProduto.precoCusto}
+                  onChange={(e) => handleNovoProdutoChange('precoCusto', e.target.value)}
+                  required
+                  placeholder="0.00"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="estoqueInicial">Estoque Inicial</Label>
+                <Input
+                  id="estoqueInicial"
+                  type="number"
+                  value={novoProduto.estoqueInicial}
+                  onChange={(e) => handleNovoProdutoChange('estoqueInicial', e.target.value)}
+                  required
+                  placeholder="0"
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <Label htmlFor="estoqueMinimo">Estoque Mínimo</Label>
+                <Input
+                  id="estoqueMinimo"
+                  type="number"
+                  value={novoProduto.estoqueMinimo}
+                  onChange={(e) => handleNovoProdutoChange('estoqueMinimo', e.target.value)}
+                  required
+                  placeholder="0"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={handleCloseModal}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" className="flex-1" disabled={loading}>
+                {loading ? 'Cadastrando...' : 'Cadastrar'}
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }, [mostrarFormulario, novoProduto, loading, handleCloseModal, handleNovoProdutoChange, criarProduto])
 
   // Componente de Modal Editar Produto (Reutilizável)
-  const ModalEditarProduto = () => (
-    <div 
-      className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
-      onClick={() => setProdutoEditando(null)}
-    >
-      <div
-        className="bg-card rounded-t-3xl sm:rounded-xl shadow-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+  const ModalEditarProduto = useMemo(() => {
+    if (!produtoEditando) return null
+    
+    return (
+      <div 
+        className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+        onClick={handleCloseProdutoEditando}
       >
-        <div className="sticky top-0 glass-dark border-b border-primary/20 p-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-xl">
-          <div className="flex items-center gap-2">
-            <Edit className="h-5 w-5 text-primary" />
-            <h2 className="font-bold gold-text">Editar Produto</h2>
-          </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setProdutoEditando(null)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-        <form onSubmit={editarProduto} className="p-4 space-y-4">
-          <div>
-            <Label htmlFor="edit-nome">Nome do Produto</Label>
-            <Input
-              id="edit-nome"
-              value={produtoEditando!.nome}
-              onChange={(e) => setProdutoEditando({ ...produtoEditando!, nome: e.target.value })}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="edit-precoVenda">Preço de Venda</Label>
-              <Input
-                id="edit-precoVenda"
-                type="number"
-                step="0.01"
-                value={produtoEditando!.precoVenda}
-                onChange={(e) => setProdutoEditando({ ...produtoEditando!, precoVenda: parseFloat(e.target.value) })}
-                required
-              />
+        <div
+          className="bg-card rounded-t-3xl sm:rounded-xl shadow-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="sticky top-0 glass-dark border-b border-primary/20 p-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-xl">
+            <div className="flex items-center gap-2">
+              <Edit className="h-5 w-5 text-primary" />
+              <h2 className="font-bold gold-text">Editar Produto</h2>
             </div>
-            <div>
-              <Label htmlFor="edit-precoCusto">Preço de Custo</Label>
-              <Input
-                id="edit-precoCusto"
-                type="number"
-                step="0.01"
-                value={produtoEditando!.precoCusto}
-                onChange={(e) => setProdutoEditando({ ...produtoEditando!, precoCusto: parseFloat(e.target.value) })}
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="edit-estoqueAtual">Estoque Atual</Label>
-            <Input
-              id="edit-estoqueAtual"
-              type="number"
-              value={produtoEditando!.estoqueAtual}
-              disabled
-              className="bg-muted"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Use "Adicionar" para alterar o estoque
-            </p>
-          </div>
-          <div>
-            <Label htmlFor="edit-estoqueMinimo">Estoque Mínimo</Label>
-            <Input
-              id="edit-estoqueMinimo"
-              type="number"
-              value={produtoEditando!.estoqueMinimo}
-              onChange={(e) => setProdutoEditando({ ...produtoEditando!, estoqueMinimo: parseInt(e.target.value) })}
-              required
-            />
-          </div>
-          <div className="flex gap-2 pt-4">
             <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => setProdutoEditando(null)}
+              size="sm"
+              variant="ghost"
+              onClick={handleCloseProdutoEditando}
             >
-              Cancelar
-            </Button>
-            <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? 'Salvando...' : 'Salvar'}
+              <X className="h-4 w-4" />
             </Button>
           </div>
-        </form>
+          <form onSubmit={editarProduto} className="p-4 space-y-4">
+            <div>
+              <Label htmlFor="edit-nome">Nome do Produto</Label>
+              <Input
+                id="edit-nome"
+                value={produtoEditando.nome}
+                onChange={(e) => setProdutoEditando({ ...produtoEditando, nome: e.target.value })}
+                required
+                autoComplete="off"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="edit-precoVenda">Preço de Venda</Label>
+                <Input
+                  id="edit-precoVenda"
+                  type="number"
+                  step="0.01"
+                  value={produtoEditando.precoVenda}
+                  onChange={(e) => setProdutoEditando({ ...produtoEditando, precoVenda: parseFloat(e.target.value) })}
+                  required
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-precoCusto">Preço de Custo</Label>
+                <Input
+                  id="edit-precoCusto"
+                  type="number"
+                  step="0.01"
+                  value={produtoEditando.precoCusto}
+                  onChange={(e) => setProdutoEditando({ ...produtoEditando, precoCusto: parseFloat(e.target.value) })}
+                  required
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="edit-estoqueAtual">Estoque Atual</Label>
+              <Input
+                id="edit-estoqueAtual"
+                type="number"
+                value={produtoEditando.estoqueAtual}
+                disabled
+                className="bg-muted"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Use "Adicionar" para alterar o estoque
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="edit-estoqueMinimo">Estoque Mínimo</Label>
+              <Input
+                id="edit-estoqueMinimo"
+                type="number"
+                value={produtoEditando.estoqueMinimo}
+                onChange={(e) => setProdutoEditando({ ...produtoEditando, estoqueMinimo: parseInt(e.target.value) })}
+                required
+                autoComplete="off"
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={handleCloseProdutoEditando}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" className="flex-1" disabled={loading}>
+                {loading ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }, [produtoEditando, loading, handleCloseProdutoEditando, editarProduto])
 
   // Renderização para Admin (com Sidebar)
   if (isAdmin) {
@@ -577,8 +607,8 @@ export default function EstoquePage() {
             )}
 
             {/* Modais */}
-            {mostrarFormulario && <ModalNovoProduto />}
-            {produtoEditando && <ModalEditarProduto />}
+            {ModalNovoProduto}
+            {ModalEditarProduto}
           </div>
         </main>
       </div>
@@ -757,8 +787,8 @@ export default function EstoquePage() {
       </div>
 
       {/* Modais */}
-      {mostrarFormulario && <ModalNovoProduto />}
-      {produtoEditando && <ModalEditarProduto />}
+      {ModalNovoProduto}
+      {ModalEditarProduto}
     </div>
   )
 }
