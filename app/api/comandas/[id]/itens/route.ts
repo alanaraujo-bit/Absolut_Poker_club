@@ -66,25 +66,28 @@ export async function POST(
       },
     })
 
-    // Baixar estoque
-    await prisma.produto.update({
-      where: { id: produtoId },
-      data: {
-        estoqueAtual: {
-          decrement: Math.ceil(qtd), // Arredonda para cima para controle de estoque
+    // Baixar estoque apenas se o produto controlar estoque (não é kg)
+    const produtoCompleto = produto as any
+    if (produtoCompleto.estoqueAtual !== null && produtoCompleto.unidadeMedida !== 'kg') {
+      await prisma.produto.update({
+        where: { id: produtoId },
+        data: {
+          estoqueAtual: {
+            decrement: Math.ceil(qtd),
+          },
         },
-      },
-    })
+      })
 
-    // Registrar movimentação de estoque
-    await prisma.estoqueMovimentacao.create({
-      data: {
-        produtoId,
-        tipo: 'saida',
-        quantidade: Math.ceil(qtd),
-        observacao: `Comanda #${comandaId} - Qtd: ${qtd}`,
-      },
-    })
+      // Registrar movimentação de estoque
+      await prisma.estoqueMovimentacao.create({
+        data: {
+          produtoId,
+          tipo: 'saida',
+          quantidade: Math.ceil(qtd),
+          observacao: `Comanda #${comandaId} - Qtd: ${qtd}`,
+        },
+      })
+    }
 
     return NextResponse.json({
       ...item,

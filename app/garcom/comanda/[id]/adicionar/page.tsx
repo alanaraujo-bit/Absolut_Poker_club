@@ -11,7 +11,7 @@ type Produto = {
   id: number
   nome: string
   precoVenda: number
-  estoqueAtual: number
+  estoqueAtual: number | null
   unidadeMedida: string
 }
 
@@ -220,9 +220,11 @@ export default function AdicionarItensPage({ params }: { params: { id: string } 
                     R$ {produto.precoVenda.toFixed(2)}
                     {produto.unidadeMedida === 'kg' && '/kg'}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Estoque: {produto.estoqueAtual} {produto.unidadeMedida}
-                  </p>
+                  {produto.estoqueAtual !== null && (
+                    <p className="text-xs text-muted-foreground">
+                      Estoque: {produto.estoqueAtual} {produto.unidadeMedida}
+                    </p>
+                  )}
                 </div>
 
                 {itemCarrinho ? (

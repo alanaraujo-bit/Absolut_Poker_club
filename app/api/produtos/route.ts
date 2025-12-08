@@ -37,13 +37,13 @@ export async function POST(request: Request) {
         precoVenda,
         precoCusto: precoCusto || null,
         unidadeMedida: unidadeMedida || 'unidade',
-        estoqueAtual: estoqueAtual || 0,
-        estoqueMinimo: estoqueMinimo || 10,
+        estoqueAtual: estoqueAtual !== null ? estoqueAtual : null,
+        estoqueMinimo: estoqueMinimo !== null ? estoqueMinimo : null,
       },
     })
 
-    // Registrar entrada inicial de estoque se houver
-    if (estoqueAtual > 0) {
+    // Registrar entrada inicial de estoque se houver e não for produto sem controle
+    if (estoqueAtual > 0 && estoqueAtual !== null) {
       await prisma.estoqueMovimentacao.create({
         data: {
           produtoId: produto.id,

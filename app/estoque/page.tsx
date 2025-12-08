@@ -85,8 +85,8 @@ export default function EstoquePage() {
           precoVenda: parseCurrencyInput(novoProduto.precoVenda),
           precoCusto: novoProduto.precoCusto ? parseCurrencyInput(novoProduto.precoCusto) : null,
           unidadeMedida: novoProduto.unidadeMedida,
-          estoqueAtual: parseInt(novoProduto.estoqueInicial),
-          estoqueMinimo: parseInt(novoProduto.estoqueMinimo),
+          estoqueAtual: novoProduto.unidadeMedida === 'kg' ? null : parseInt(novoProduto.estoqueInicial || '0'),
+          estoqueMinimo: novoProduto.unidadeMedida === 'kg' ? null : parseInt(novoProduto.estoqueMinimo || '0'),
         }),
       })
 
@@ -226,7 +226,11 @@ export default function EstoquePage() {
     }
   }
 
-  const produtosComEstoqueBaixo = produtos.filter(p => p.estoqueAtual <= p.estoqueMinimo)
+  const produtosComEstoqueBaixo = produtos.filter(p => 
+    p.estoqueAtual !== null && 
+    p.estoqueMinimo !== null && 
+    p.estoqueAtual <= p.estoqueMinimo
+  )
 
   // Handlers estáveis
   const handleNovoProdutoChange = useCallback((field: string, value: string) => {
@@ -320,27 +324,38 @@ export default function EstoquePage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="estoqueInicial">Estoque Inicial</Label>
+                <Label htmlFor="estoqueInicial">
+                  Estoque Inicial {novoProduto.unidadeMedida === 'kg' ? '(Opcional)' : '*'}
+                </Label>
                 <Input
                   id="estoqueInicial"
                   type="number"
                   value={novoProduto.estoqueInicial}
                   onChange={(e) => handleNovoProdutoChange('estoqueInicial', e.target.value)}
-                  required
+                  required={novoProduto.unidadeMedida !== 'kg'}
                   placeholder="0"
                   autoComplete="off"
+                  disabled={novoProduto.unidadeMedida === 'kg'}
                 />
+                {novoProduto.unidadeMedida === 'kg' && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Produtos por peso não controlam estoque
+                  </p>
+                )}
               </div>
               <div>
-                <Label htmlFor="estoqueMinimo">Estoque Mínimo</Label>
+                <Label htmlFor="estoqueMinimo">
+                  Estoque Mínimo {novoProduto.unidadeMedida === 'kg' ? '(Opcional)' : '*'}
+                </Label>
                 <Input
                   id="estoqueMinimo"
                   type="number"
                   value={novoProduto.estoqueMinimo}
                   onChange={(e) => handleNovoProdutoChange('estoqueMinimo', e.target.value)}
-                  required
+                  required={novoProduto.unidadeMedida !== 'kg'}
                   placeholder="0"
                   autoComplete="off"
+                  disabled={novoProduto.unidadeMedida === 'kg'}
                 />
               </div>
             </div>
@@ -604,32 +619,46 @@ export default function EstoquePage() {
                             {produto.precoCusto ? formatCurrency(Number(produto.precoCusto)) : '-'}
                           </p>
                         </div>
-                        <div className="bg-background/30 rounded-lg p-2">
-                          <p className="text-xs text-muted-foreground">Estoque</p>
-                          <p className="font-bold text-lg gold-text">
-                            {produto.estoqueAtual}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Mín: {produto.estoqueMinimo}
-                          </p>
+                        {produto.estoqueAtual !== null ? (
+                          <div className="bg-background/30 rounded-lg p-2">
+                            <p className="text-xs text-muted-foreground">Estoque</p>
+                            <p className="font-bold text-lg gold-text">
+                              {produto.estoqueAtual}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Mín: {produto.estoqueMinimo}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="bg-background/30 rounded-lg p-2">
+                            <p className="text-xs text-muted-foreground">Estoque</p>
+                            <p className="font-bold text-sm text-muted-foreground">
+                              N/A
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Peso variável
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      {produto.estoqueAtual !== null && (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Quantidade"
+                            value={entradaEstoque[produto.id] || ''}
+                            onChange={(e) => setEntradaEstoque({ ...entradaEstoque, [produto.id]: e.target.value })}
+                            className="flex-1"
+                          />
+                          <Button
+                            onClick={() => adicionarEstoque(produto.id)}
+                            className="gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Adicionar
+                          </Button>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          placeholder="Quantidade"
-                          value={entradaEstoque[produto.id] || ''}
-                          onChange={(e) => setEntradaEstoque({ ...entradaEstoque, [produto.id]: e.target.value })}
-                          className="flex-1"
-                        />
-                        <Button
-                          onClick={() => adicionarEstoque(produto.id)}
-                          className="gap-2"
-                        >
-                          <Plus className="h-4 w-4" />
-                          Adicionar
-                        </Button>
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
                 </motion.div>
