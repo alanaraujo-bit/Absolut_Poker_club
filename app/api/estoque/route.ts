@@ -15,6 +15,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Produto não encontrado' }, { status: 404 })
     }
 
+    // Verificar se o produto controla estoque
+    if (produto.estoqueAtual === null) {
+      return NextResponse.json({ error: 'Este produto não controla estoque' }, { status: 400 })
+    }
+
     const novoEstoque = tipo === 'entrada'
       ? produto.estoqueAtual + quantidade
       : produto.estoqueAtual - quantidade

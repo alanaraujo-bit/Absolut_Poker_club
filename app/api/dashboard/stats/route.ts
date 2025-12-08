@@ -69,13 +69,25 @@ export async function GET() {
       produtoMaisVendido = produto?.nome || '-'
     }
 
-    // Estoques baixos
+    // Estoques baixos - apenas produtos que controlam estoque
     const estoquesBaixos = await prisma.produto.count({
       where: {
         ativo: true,
         estoqueAtual: {
-          lte: prisma.produto.fields.estoqueMinimo,
+          not: null,
         },
+        AND: [
+          {
+            estoqueAtual: {
+              lte: prisma.produto.fields.estoqueMinimo,
+            },
+          },
+          {
+            estoqueMinimo: {
+              not: null,
+            },
+          },
+        ],
       },
     })
 

@@ -33,12 +33,12 @@ export async function POST(request: Request) {
           },
         })
 
-        // Atualizar estoque
+        // Atualizar estoque apenas se o produto controlar estoque
         const produto = await tx.produto.findUnique({
           where: { id: item.produtoId },
         })
 
-        if (produto) {
+        if (produto && produto.estoqueAtual !== null) {
           await tx.produto.update({
             where: { id: item.produtoId },
             data: {
