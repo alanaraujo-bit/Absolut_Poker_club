@@ -119,9 +119,9 @@ export function generatePixPayload(config: PixConfig): string {
  * As configurações são lidas das variáveis de ambiente
  */
 export const DEFAULT_PIX_CONFIG = {
-  chavePix: process.env.NEXT_PUBLIC_PIX_KEY || 'sua.chave@pix.com',
-  merchantName: process.env.NEXT_PUBLIC_PIX_MERCHANT_NAME || 'ABSOLUTE POKER CLUB',
-  merchantCity: process.env.NEXT_PUBLIC_PIX_MERCHANT_CITY || 'SAO PAULO',
+  chavePix: '03752390220',
+  merchantName: 'FELIPE CARVALHO DE PAULO',
+  merchantCity: 'CANAA DOS CARAJAS',
 }
 
 /**
@@ -129,7 +129,8 @@ export const DEFAULT_PIX_CONFIG = {
  */
 export function generatePixForComanda(
   comandaId: number,
-  valor: number
+  valor: number,
+  config?: { chavePix?: string; merchantName?: string; merchantCity?: string }
 ): string {
   // Gera um txid único com timestamp para evitar duplicação
   const timestamp = Date.now().toString().slice(-8)
@@ -137,6 +138,7 @@ export function generatePixForComanda(
   
   return generatePixPayload({
     ...DEFAULT_PIX_CONFIG,
+    ...config,
     valor,
     txid: txid.substring(0, 25), // Limita a 25 caracteres
   })
