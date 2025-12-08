@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Plus, Clock, X, Receipt, LogOut, ChevronRight, BarChart3, User } from 'lucide-react'
+import { Search, Plus, Clock, X, Receipt, LogOut, ChevronRight, BarChart3, User, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/lib/auth-context'
@@ -438,6 +438,41 @@ function NovaComandaView({ onVoltar, onAbrir, loading }: any) {
 
 function DetalhesComandaView({ comanda, onVoltar }: any) {
   const router = useRouter()
+  const { toast } = useToast()
+  const [excluindo, setExcluindo] = useState(false)
+
+  const excluirComanda = async () => {
+    if (!confirm(`Tem certeza que deseja excluir a comanda #${comanda.id} de ${comanda.cliente.nome}?`)) {
+      return
+    }
+
+    setExcluindo(true)
+    try {
+      const res = await fetch(`/api/comandas/${comanda.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error)
+      }
+
+      toast({
+        title: '✅ Comanda excluída',
+        description: `Comanda #${comanda.id} foi excluída com sucesso`,
+      })
+
+      onVoltar()
+    } catch (error: any) {
+      toast({
+        title: '❌ Erro',
+        description: error.message,
+        variant: 'destructive',
+      })
+    } finally {
+      setExcluindo(false)
+    }
+  }
 
   const agruparPorData = () => {
     const grupos: any = {}
@@ -507,6 +542,14 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
         >
           <Receipt className="w-5 h-5" />
           Fechar Comanda
+        </button>
+        <button
+          onClick={excluirComanda}
+          disabled={excluindo}
+          className="w-full bg-red-600 hover:bg-red-700 text-white h-12 text-lg font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Trash2 className="w-5 h-5" />
+          {excluindo ? 'Excluindo...' : 'Excluir Comanda'}
         </button>
       </div>
     </div>

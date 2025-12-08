@@ -73,3 +73,50 @@ export async function PUT(
     return NextResponse.json({ error: 'Erro ao atualizar comanda' }, { status: 500 })
   }
 }
+
+// DELETE - Excluir comanda
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: idStr } = await params
+    const id = parseInt(idStr)
+
+    // Verificar se a comanda existe
+    const comanda = await prisma.comanda.findUnique({
+      where: { id },
+      include: { itens: true },
+    })
+
+    if (!comanda) {
+      return NextResponse.json({ error: 'Comanda não encontrada' }, { status: 404 })
+    }
+
+    // Verificar se a comanda está fechada
+    if (comanda.status === 'fechada') {
+      return NextResponse.json(
+        { error: 'Não é possível excluir uma comanda fechada' },
+        { status: 400 }
+      )
+    }
+
+    // Excluir itens da comanda primeiro (por causa da relação)
+    await prisma.itemComanda.deleteMany({
+      where: { comandaId: id },
+    })
+
+    // Excluir a comanda
+    await prisma.comanda.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Comanda excluída com sucesso',
+    })
+  } catch (error) {
+    console.error('Erro ao excluir comanda:', error)
+    return NextResponse.json({ error: 'Erro ao excluir comanda' }, { status: 500 })
+  }
+}
