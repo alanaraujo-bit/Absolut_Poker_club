@@ -147,12 +147,21 @@ export default function FecharComandaPage({ params }: { params: { id: string } }
         throw new Error(error.error)
       }
 
+      // Força atualização das estatísticas do dashboard
+      await fetch('/api/dashboard/stats', {
+        cache: 'no-store',
+      })
+
       toast({
         title: '✅ Comanda fechada',
         description: `Total: R$ ${comanda?.valorTotal.toFixed(2)}`,
       })
 
-      router.push('/garcom')
+      // Adiciona um delay para garantir que o banco atualizou
+      setTimeout(() => {
+        router.push('/garcom')
+        router.refresh()
+      }, 500)
     } catch (error: any) {
       toast({
         title: '❌ Erro',
