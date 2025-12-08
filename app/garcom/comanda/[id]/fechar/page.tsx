@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Check, X, ArrowLeft } from 'lucide-react'
+import { Check, X, ArrowLeft, Copy, Download } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/use-toast'
 import { useRouter } from 'next/navigation'
+import { QRCodeSVG } from 'qrcode.react'
+import { generatePixForComanda } from '@/lib/pix-generator'
 
 type Comanda = {
   id: number
@@ -31,6 +33,8 @@ export default function FecharComandaPage({ params }: { params: { id: string } }
   const [formaPagamento, setFormaPagamento] = useState('')
   const [observacao, setObservacao] = useState('')
   const [loading, setLoading] = useState(false)
+  const [mostrarQrCode, setMostrarQrCode] = useState(false)
+  const [pixPayload, setPixPayload] = useState('')
 
   useEffect(() => {
     carregarComanda()
@@ -40,6 +44,64 @@ export default function FecharComandaPage({ params }: { params: { id: string } }
     const res = await fetch(`/api/comandas/${params.id}`)
     const data = await res.json()
     setComanda(data)
+  }
+
+  const handleFormaPagamentoChange = (forma: string) => {
+    setFormaPagamento(forma)
+    
+    // Se selecionou PIX, gera o payload
+    if (forma === 'pix' && comanda) {
+      const payload = generatePixForComanda(comanda.id, comanda.valorTotal)
+      setPixPayload(payload)
+      setMostrarQrCode(true)
+    } else {
+      setMostrarQrCode(false)
+    }
+  }
+
+  const copiarCodigoPix = async () => {
+    try {
+      await navigator.clipboard.writeText(pixPayload)
+      toast({
+        title: '✅ Código copiado!',
+        description: 'Cole no app do seu banco para pagar',
+      })
+    } catch (error) {
+      toast({
+        title: '❌ Erro ao copiar',
+        description: 'Tente novamente',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const baixarQrCode = () => {
+    const svg = document.getElementById('qrcode-pix')
+    if (!svg) return
+
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      ctx?.drawImage(img, 0, 0)
+      const pngFile = canvas.toDataURL('image/png')
+
+      const downloadLink = document.createElement('a')
+      downloadLink.download = `qrcode-comanda-${params.id}.png`
+      downloadLink.href = pngFile
+      downloadLink.click()
+
+      toast({
+        title: '✅ QR Code baixado!',
+        description: 'Imagem salva com sucesso',
+      })
+    }
+
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
   }
 
   const fecharComanda = async () => {
@@ -137,7 +199,7 @@ export default function FecharComandaPage({ params }: { params: { id: string } }
               <motion.button
                 key={forma.value}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setFormaPagamento(forma.value)}
+                onClick={() => handleFormaPagamentoChange(forma.value)}
                 className={`
                   poker-card p-4 text-center transition-all
                   ${formaPagamento === forma.value
@@ -151,6 +213,93 @@ export default function FecharComandaPage({ params }: { params: { id: string } }
             ))}
           </div>
         </div>
+
+        {/* QR Code PIX */}
+        {mostrarQrCode && pixPayload && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-poker rounded-xl p-6 space-y-4"
+          >
+            <div className="text-center">
+              <h2 className="text-xl font-bold gold-text mb-2">💳 Pague com PIX</h2>
+              <p className="text-sm text-muted-foreground">
+                Escaneie o QR Code ou copie o código
+              </p>
+            </div>
+
+            {/* QR Code */}
+            <div className="flex justify-center">
+              <div className="bg-white p-4 rounded-xl shadow-2xl">
+                <QRCodeSVG
+                  id="qrcode-pix"
+                  value={pixPayload}
+                  size={240}
+                  level="H"
+                  includeMargin={true}
+                />
+              </div>
+            </div>
+
+            {/* Valor em destaque */}
+            <div className="text-center py-4 border-y border-primary/20">
+              <p className="text-sm text-muted-foreground mb-1">Valor a pagar</p>
+              <p className="text-4xl font-bold gold-text">
+                R$ {comanda?.valorTotal.toFixed(2)}
+              </p>
+            </div>
+
+            {/* Código PIX Copia e Cola */}
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">
+                Código PIX Copia e Cola
+              </Label>
+              <div className="relative">
+                <Input
+                  value={pixPayload}
+                  readOnly
+                  className="pr-24 font-mono text-xs"
+                />
+                <button
+                  onClick={copiarCodigoPix}
+                  className="absolute right-1 top-1 bottom-1 px-4 btn-poker-primary rounded-md text-sm font-semibold flex items-center gap-1"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copiar
+                </button>
+              </div>
+            </div>
+
+            {/* Botões de ação */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={baixarQrCode}
+                className="poker-card p-3 hover:bg-primary/10 transition-all flex items-center justify-center gap-2"
+              >
+                <Download className="w-5 h-5" />
+                <span className="font-semibold">Baixar QR</span>
+              </button>
+              <button
+                onClick={copiarCodigoPix}
+                className="btn-poker-primary p-3 rounded-lg flex items-center justify-center gap-2"
+              >
+                <Copy className="w-5 h-5" />
+                <span className="font-semibold">Copiar Código</span>
+              </button>
+            </div>
+
+            {/* Instruções */}
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+              <p className="text-sm text-blue-200 leading-relaxed">
+                💡 <strong>Como pagar:</strong><br />
+                1. Abra o app do seu banco<br />
+                2. Escolha pagar com PIX<br />
+                3. Escaneie o QR Code ou cole o código<br />
+                4. Confirme o pagamento
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* Observação */}
         <div className="space-y-2">
