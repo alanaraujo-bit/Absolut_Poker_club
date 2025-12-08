@@ -21,3 +21,23 @@ export function formatDate(date: Date): string {
     minute: '2-digit',
   }).format(new Date(date))
 }
+
+// Formatar valor para input de moeda (sem símbolo R$)
+export function formatCurrencyInput(value: string): string {
+  // Remove tudo exceto números
+  const numbers = value.replace(/\D/g, '')
+  
+  if (!numbers) return ''
+  
+  // Converte para número e divide por 100 para ter os centavos
+  const amount = parseFloat(numbers) / 100
+  
+  // Formata com 2 casas decimais
+  return amount.toFixed(2).replace('.', ',')
+}
+
+// Converter valor formatado de volta para número
+export function parseCurrencyInput(value: string): number {
+  const numbers = value.replace(/\D/g, '')
+  return parseFloat(numbers) / 100
+}

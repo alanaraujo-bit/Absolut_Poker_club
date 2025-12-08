@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseCurrencyInput } from '@/lib/utils'
 import Sidebar from '@/components/sidebar'
 import PageHeader from '@/components/page-header'
 import { useToast } from '@/components/ui/use-toast'
@@ -103,7 +104,7 @@ export default function ClientesPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          valor: parseFloat(valorPagamento),
+          valor: parseCurrencyInput(valorPagamento),
           descricao: 'Pagamento recebido'
         }),
       })
@@ -111,7 +112,7 @@ export default function ClientesPage() {
       if (res.ok) {
         toast({
           title: "Pagamento registrado!",
-          description: `Valor de ${formatCurrency(parseFloat(valorPagamento))} recebido.`,
+          description: `Valor de ${formatCurrency(parseCurrencyInput(valorPagamento))} recebido.`,
         })
         setValorPagamento('')
         setPagamentoAberto(null)
@@ -417,14 +418,14 @@ export default function ClientesPage() {
                             {cliente.saldo < 0 && (
                               pagamentoAberto === cliente.id ? (
                                 <>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Valor"
-                                    className="w-28 h-9"
-                                    value={valorPagamento}
-                                    onChange={(e) => setValorPagamento(e.target.value)}
-                                  />
+                                  <div className="w-32">
+                                    <CurrencyInput
+                                      placeholder="Valor"
+                                      className="h-9"
+                                      value={valorPagamento}
+                                      onValueChange={setValorPagamento}
+                                    />
+                                  </div>
                                   <Button
                                     size="sm"
                                     onClick={() => handlePagar(cliente.id)}
@@ -515,13 +516,11 @@ export default function ClientesPage() {
                         <>
                           {pagamentoAberto === cliente.id ? (
                             <div className="space-y-2">
-                              <Input
-                                type="number"
-                                step="0.01"
+                              <CurrencyInput
                                 placeholder="Valor do pagamento"
                                 className="w-full h-11"
                                 value={valorPagamento}
-                                onChange={(e) => setValorPagamento(e.target.value)}
+                                onValueChange={setValorPagamento}
                                 autoFocus
                               />
                               <div className="flex gap-2">

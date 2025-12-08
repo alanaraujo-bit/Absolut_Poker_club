@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { formatCurrency } from '@/lib/utils'
+import { CurrencyInput } from '@/components/ui/currency-input'
+import { formatCurrency, parseCurrencyInput } from '@/lib/utils'
 import { useToast } from '@/components/ui/use-toast'
 import { generateEstoquePDF } from '@/lib/pdf-generator'
 import { useRouter } from 'next/navigation'
@@ -41,6 +42,8 @@ export default function EstoquePage() {
     estoqueMinimo: '',
   })
   const [produtoEditando, setProdutoEditando] = useState<Produto | null>(null)
+  const [precoVendaEdit, setPrecoVendaEdit] = useState('')
+  const [precoCustoEdit, setPrecoCustoEdit] = useState('')
   const [entradaEstoque, setEntradaEstoque] = useState<{ [key: number]: string }>({})
   const { toast } = useToast()
 
@@ -79,8 +82,8 @@ export default function EstoquePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome: novoProduto.nome,
-          precoVenda: parseFloat(novoProduto.precoVenda),
-          precoCusto: novoProduto.precoCusto ? parseFloat(novoProduto.precoCusto) : null,
+          precoVenda: parseCurrencyInput(novoProduto.precoVenda),
+          precoCusto: novoProduto.precoCusto ? parseCurrencyInput(novoProduto.precoCusto) : null,
           unidadeMedida: novoProduto.unidadeMedida,
           estoqueAtual: parseInt(novoProduto.estoqueInicial),
           estoqueMinimo: parseInt(novoProduto.estoqueMinimo),
@@ -197,8 +200,8 @@ export default function EstoquePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome: produtoEditando.nome,
-          precoVenda: Number(produtoEditando.precoVenda),
-          precoCusto: produtoEditando.precoCusto ? Number(produtoEditando.precoCusto) : null,
+          precoVenda: parseCurrencyInput(precoVendaEdit),
+          precoCusto: precoCustoEdit ? parseCurrencyInput(precoCustoEdit) : null,
           unidadeMedida: produtoEditando.unidadeMedida,
           estoqueMinimo: Number(produtoEditando.estoqueMinimo),
         }),
@@ -279,26 +282,20 @@ export default function EstoquePage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="precoVenda">Preço de Venda *</Label>
-                <Input
+                <CurrencyInput
                   id="precoVenda"
-                  type="number"
-                  step="0.01"
                   value={novoProduto.precoVenda}
-                  onChange={(e) => handleNovoProdutoChange('precoVenda', e.target.value)}
+                  onValueChange={(value) => handleNovoProdutoChange('precoVenda', value)}
                   required
-                  placeholder="0.00"
                   autoComplete="off"
                 />
               </div>
               <div>
                 <Label htmlFor="precoCusto">Preço de Custo (Opcional)</Label>
-                <Input
+                <CurrencyInput
                   id="precoCusto"
-                  type="number"
-                  step="0.01"
                   value={novoProduto.precoCusto}
-                  onChange={(e) => handleNovoProdutoChange('precoCusto', e.target.value)}
-                  placeholder="0.00"
+                  onValueChange={(value) => handleNovoProdutoChange('precoCusto', value)}
                   autoComplete="off"
                 />
               </div>
@@ -406,24 +403,20 @@ export default function EstoquePage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="edit-precoVenda">Preço de Venda *</Label>
-                <Input
+                <CurrencyInput
                   id="edit-precoVenda"
-                  type="number"
-                  step="0.01"
-                  value={produtoEditando.precoVenda}
-                  onChange={(e) => setProdutoEditando({ ...produtoEditando, precoVenda: parseFloat(e.target.value) })}
+                  value={precoVendaEdit}
+                  onValueChange={setPrecoVendaEdit}
                   required
                   autoComplete="off"
                 />
               </div>
               <div>
                 <Label htmlFor="edit-precoCusto">Preço de Custo (Opcional)</Label>
-                <Input
+                <CurrencyInput
                   id="edit-precoCusto"
-                  type="number"
-                  step="0.01"
-                  value={produtoEditando.precoCusto || ''}
-                  onChange={(e) => setProdutoEditando({ ...produtoEditando, precoCusto: e.target.value ? parseFloat(e.target.value) : null })}
+                  value={precoCustoEdit}
+                  onValueChange={setPrecoCustoEdit}
                   autoComplete="off"
                 />
               </div>
@@ -576,7 +569,11 @@ export default function EstoquePage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => setProdutoEditando(produto)}
+                            onClick={() => {
+                              setProdutoEditando(produto)
+                              setPrecoVendaEdit(produto.precoVenda.toFixed(2).replace('.', ','))
+                              setPrecoCustoEdit(produto.precoCusto ? produto.precoCusto.toFixed(2).replace('.', ',') : '')
+                            }}
                             className="h-8 w-8 p-0"
                           >
                             <Edit className="h-3 w-3" />
@@ -755,7 +752,11 @@ export default function EstoquePage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setProdutoEditando(produto)}
+                      onClick={() => {
+                        setProdutoEditando(produto)
+                        setPrecoVendaEdit(produto.precoVenda.toFixed(2).replace('.', ','))
+                        setPrecoCustoEdit(produto.precoCusto ? produto.precoCusto.toFixed(2).replace('.', ',') : '')
+                      }}
                       className="h-8 w-8 p-0"
                     >
                       <Edit className="h-3 w-3" />
