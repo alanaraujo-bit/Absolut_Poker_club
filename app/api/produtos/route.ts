@@ -16,7 +16,7 @@ export async function GET() {
     const produtosFormatados = produtos.map(p => ({
       ...p,
       precoVenda: Number(p.precoVenda),
-      precoCusto: Number(p.precoCusto),
+      precoCusto: p.precoCusto ? Number(p.precoCusto) : null,
     }))
 
     return NextResponse.json(produtosFormatados)
@@ -29,13 +29,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { nome, precoVenda, precoCusto, estoqueAtual, estoqueMinimo } = body
+    const { nome, precoVenda, precoCusto, unidadeMedida, estoqueAtual, estoqueMinimo } = body
 
     const produto = await prisma.produto.create({
       data: {
         nome,
         precoVenda,
-        precoCusto,
+        precoCusto: precoCusto || null,
+        unidadeMedida: unidadeMedida || 'unidade',
         estoqueAtual: estoqueAtual || 0,
         estoqueMinimo: estoqueMinimo || 10,
       },

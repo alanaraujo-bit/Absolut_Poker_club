@@ -27,7 +27,8 @@ model Produto {
   id                     Int                     @id @default(autoincrement())
   nome                   String
   precoVenda            Decimal                 @map("preco_venda") @db.Decimal(10, 2)
-  precoCusto            Decimal                 @map("preco_custo") @db.Decimal(10, 2)
+  precoCusto            Decimal?                @map("preco_custo") @db.Decimal(10, 2)
+  unidadeMedida         String                  @default("unidade") @map("unidade_medida")
   estoqueAtual          Int                     @default(0) @map("estoque_atual")
   estoqueMinimo         Int                     @default(10) @map("estoque_minimo")
   ativo                  Boolean                 @default(true)

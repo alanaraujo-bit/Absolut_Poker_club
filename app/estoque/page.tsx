@@ -19,7 +19,8 @@ interface Produto {
   id: number
   nome: string
   precoVenda: number
-  precoCusto: number
+  precoCusto: number | null
+  unidadeMedida: string
   estoqueAtual: number
   estoqueMinimo: number
   ativo: boolean
@@ -35,6 +36,7 @@ export default function EstoquePage() {
     nome: '',
     precoVenda: '',
     precoCusto: '',
+    unidadeMedida: 'unidade',
     estoqueInicial: '',
     estoqueMinimo: '',
   })
@@ -78,7 +80,8 @@ export default function EstoquePage() {
         body: JSON.stringify({
           nome: novoProduto.nome,
           precoVenda: parseFloat(novoProduto.precoVenda),
-          precoCusto: parseFloat(novoProduto.precoCusto),
+          precoCusto: novoProduto.precoCusto ? parseFloat(novoProduto.precoCusto) : null,
+          unidadeMedida: novoProduto.unidadeMedida,
           estoqueAtual: parseInt(novoProduto.estoqueInicial),
           estoqueMinimo: parseInt(novoProduto.estoqueMinimo),
         }),
@@ -93,6 +96,7 @@ export default function EstoquePage() {
           nome: '',
           precoVenda: '',
           precoCusto: '',
+          unidadeMedida: 'unidade',
           estoqueInicial: '',
           estoqueMinimo: '',
         })
@@ -194,7 +198,8 @@ export default function EstoquePage() {
         body: JSON.stringify({
           nome: produtoEditando.nome,
           precoVenda: Number(produtoEditando.precoVenda),
-          precoCusto: Number(produtoEditando.precoCusto),
+          precoCusto: produtoEditando.precoCusto ? Number(produtoEditando.precoCusto) : null,
+          unidadeMedida: produtoEditando.unidadeMedida,
           estoqueMinimo: Number(produtoEditando.estoqueMinimo),
         }),
       })
@@ -273,7 +278,7 @@ export default function EstoquePage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="precoVenda">Preço de Venda</Label>
+                <Label htmlFor="precoVenda">Preço de Venda *</Label>
                 <Input
                   id="precoVenda"
                   type="number"
@@ -286,18 +291,35 @@ export default function EstoquePage() {
                 />
               </div>
               <div>
-                <Label htmlFor="precoCusto">Preço de Custo</Label>
+                <Label htmlFor="precoCusto">Preço de Custo (Opcional)</Label>
                 <Input
                   id="precoCusto"
                   type="number"
                   step="0.01"
                   value={novoProduto.precoCusto}
                   onChange={(e) => handleNovoProdutoChange('precoCusto', e.target.value)}
-                  required
                   placeholder="0.00"
                   autoComplete="off"
                 />
               </div>
+            </div>
+            <div>
+              <Label htmlFor="unidadeMedida">Unidade de Medida *</Label>
+              <select
+                id="unidadeMedida"
+                value={novoProduto.unidadeMedida}
+                onChange={(e) => handleNovoProdutoChange('unidadeMedida', e.target.value)}
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="unidade">Unidade</option>
+                <option value="kg">Quilograma (kg)</option>
+                <option value="g">Grama (g)</option>
+                <option value="l">Litro (L)</option>
+                <option value="ml">Mililitro (mL)</option>
+                <option value="caixa">Caixa</option>
+                <option value="pacote">Pacote</option>
+              </select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -383,7 +405,7 @@ export default function EstoquePage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="edit-precoVenda">Preço de Venda</Label>
+                <Label htmlFor="edit-precoVenda">Preço de Venda *</Label>
                 <Input
                   id="edit-precoVenda"
                   type="number"
@@ -395,17 +417,34 @@ export default function EstoquePage() {
                 />
               </div>
               <div>
-                <Label htmlFor="edit-precoCusto">Preço de Custo</Label>
+                <Label htmlFor="edit-precoCusto">Preço de Custo (Opcional)</Label>
                 <Input
                   id="edit-precoCusto"
                   type="number"
                   step="0.01"
-                  value={produtoEditando.precoCusto}
-                  onChange={(e) => setProdutoEditando({ ...produtoEditando, precoCusto: parseFloat(e.target.value) })}
-                  required
+                  value={produtoEditando.precoCusto || ''}
+                  onChange={(e) => setProdutoEditando({ ...produtoEditando, precoCusto: e.target.value ? parseFloat(e.target.value) : null })}
                   autoComplete="off"
                 />
               </div>
+            </div>
+            <div>
+              <Label htmlFor="edit-unidadeMedida">Unidade de Medida *</Label>
+              <select
+                id="edit-unidadeMedida"
+                value={produtoEditando.unidadeMedida}
+                onChange={(e) => setProdutoEditando({ ...produtoEditando, unidadeMedida: e.target.value })}
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="unidade">Unidade</option>
+                <option value="kg">Quilograma (kg)</option>
+                <option value="g">Grama (g)</option>
+                <option value="l">Litro (L)</option>
+                <option value="ml">Mililitro (mL)</option>
+                <option value="caixa">Caixa</option>
+                <option value="pacote">Pacote</option>
+              </select>
             </div>
             <div>
               <Label htmlFor="edit-estoqueAtual">Estoque Atual</Label>
@@ -559,12 +598,13 @@ export default function EstoquePage() {
                           <p className="text-xs text-muted-foreground">Venda</p>
                           <p className="font-bold text-primary text-sm">
                             {formatCurrency(Number(produto.precoVenda))}
+                            <span className="text-[10px] text-muted-foreground">/{produto.unidadeMedida}</span>
                           </p>
                         </div>
                         <div className="bg-background/30 rounded-lg p-2">
                           <p className="text-xs text-muted-foreground">Custo</p>
                           <p className="font-bold text-sm">
-                            {formatCurrency(Number(produto.precoCusto))}
+                            {produto.precoCusto ? formatCurrency(Number(produto.precoCusto)) : '-'}
                           </p>
                         </div>
                         <div className="bg-background/30 rounded-lg p-2">
@@ -737,12 +777,13 @@ export default function EstoquePage() {
                     <p className="text-xs text-muted-foreground">Venda</p>
                     <p className="font-bold text-primary text-sm">
                       {formatCurrency(Number(produto.precoVenda))}
+                      <span className="text-[10px] text-muted-foreground block">/{produto.unidadeMedida}</span>
                     </p>
                   </div>
                   <div className="bg-background/30 rounded-lg p-2">
                     <p className="text-xs text-muted-foreground">Custo</p>
                     <p className="font-bold text-sm">
-                      {formatCurrency(Number(produto.precoCusto))}
+                      {produto.precoCusto ? formatCurrency(Number(produto.precoCusto)) : '-'}
                     </p>
                   </div>
                   <div className="bg-background/30 rounded-lg p-2">
