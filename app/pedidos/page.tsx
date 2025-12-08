@@ -17,6 +17,7 @@ interface Produto {
   id: number
   nome: string
   precoVenda: number
+  unidadeMedida: string
   estoqueAtual: number
 }
 
@@ -30,6 +31,7 @@ interface ItemCarrinho {
   produtoId: number
   nome: string
   precoUnitario: number
+  unidadeMedida: string
   quantidade: number
   subtotal: number
 }
@@ -106,6 +108,7 @@ export default function PedidosPage() {
         produtoId: produto.id,
         nome: produto.nome,
         precoUnitario: Number(produto.precoVenda),
+        unidadeMedida: produto.unidadeMedida,
         quantidade: 1,
         subtotal: Number(produto.precoVenda),
       }])
@@ -267,9 +270,12 @@ export default function PedidosPage() {
                         >
                           <h3 className="font-semibold mb-2">{produto.nome}</h3>
                           <div className="flex items-center justify-between">
-                            <span className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">
-                              {formatCurrency(Number(produto.precoVenda))}
-                            </span>
+                            <div>
+                              <span className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">
+                                {formatCurrency(Number(produto.precoVenda))}
+                              </span>
+                              <span className="text-xs text-muted-foreground ml-1">/{produto.unidadeMedida}</span>
+                            </div>
                             <span className="text-sm text-muted-foreground">
                               Estoque: {produto.estoqueAtual}
                             </span>
@@ -302,7 +308,12 @@ export default function PedidosPage() {
                       carrinho.map((item) => (
                         <div key={item.produtoId} className="p-3 rounded-lg glass-effect">
                           <div className="flex items-start justify-between mb-2">
-                            <span className="font-medium text-sm">{item.nome}</span>
+                            <div>
+                              <span className="font-medium text-sm">{item.nome}</span>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {formatCurrency(item.precoUnitario)}/{item.unidadeMedida}
+                              </div>
+                            </div>
                             <button
                               onClick={() => removerDoCarrinho(item.produtoId)}
                               className="text-red-500 hover:text-red-400"
