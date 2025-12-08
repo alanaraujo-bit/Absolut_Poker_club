@@ -85,8 +85,8 @@ export default function EstoquePage() {
           precoVenda: parseCurrencyInput(novoProduto.precoVenda),
           precoCusto: novoProduto.precoCusto ? parseCurrencyInput(novoProduto.precoCusto) : null,
           unidadeMedida: novoProduto.unidadeMedida,
-          estoqueAtual: novoProduto.unidadeMedida === 'kg' ? null : parseInt(novoProduto.estoqueInicial || '0'),
-          estoqueMinimo: novoProduto.unidadeMedida === 'kg' ? null : parseInt(novoProduto.estoqueMinimo || '0'),
+          estoqueAtual: novoProduto.estoqueInicial ? parseInt(novoProduto.estoqueInicial) : null,
+          estoqueMinimo: novoProduto.estoqueMinimo ? parseInt(novoProduto.estoqueMinimo) : null,
         }),
       })
 
@@ -325,37 +325,31 @@ export default function EstoquePage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="estoqueInicial">
-                  Estoque Inicial {novoProduto.unidadeMedida === 'kg' ? '(Opcional)' : '*'}
+                  Estoque Inicial (Opcional)
                 </Label>
                 <Input
                   id="estoqueInicial"
                   type="number"
                   value={novoProduto.estoqueInicial}
                   onChange={(e) => handleNovoProdutoChange('estoqueInicial', e.target.value)}
-                  required={novoProduto.unidadeMedida !== 'kg'}
-                  placeholder="0"
+                  placeholder="Deixe vazio para não controlar"
                   autoComplete="off"
-                  disabled={novoProduto.unidadeMedida === 'kg'}
                 />
-                {novoProduto.unidadeMedida === 'kg' && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Produtos por peso não controlam estoque
-                  </p>
-                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Deixe vazio se não quiser controlar estoque
+                </p>
               </div>
               <div>
                 <Label htmlFor="estoqueMinimo">
-                  Estoque Mínimo {novoProduto.unidadeMedida === 'kg' ? '(Opcional)' : '*'}
+                  Estoque Mínimo (Opcional)
                 </Label>
                 <Input
                   id="estoqueMinimo"
                   type="number"
                   value={novoProduto.estoqueMinimo}
                   onChange={(e) => handleNovoProdutoChange('estoqueMinimo', e.target.value)}
-                  required={novoProduto.unidadeMedida !== 'kg'}
-                  placeholder="0"
+                  placeholder="Deixe vazio para não controlar"
                   autoComplete="off"
-                  disabled={novoProduto.unidadeMedida === 'kg'}
                 />
               </div>
             </div>
@@ -636,7 +630,7 @@ export default function EstoquePage() {
                               N/A
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Peso variável
+                              Sem controle
                             </p>
                           </div>
                         )}

@@ -66,9 +66,9 @@ export async function POST(
       },
     })
 
-    // Baixar estoque apenas se o produto controlar estoque (não é kg)
+    // Baixar estoque apenas se o produto controlar estoque
     const produtoCompleto = produto as any
-    if (produtoCompleto.estoqueAtual !== null && produtoCompleto.unidadeMedida !== 'kg') {
+    if (produtoCompleto.estoqueAtual !== null) {
       await prisma.produto.update({
         where: { id: produtoId },
         data: {
