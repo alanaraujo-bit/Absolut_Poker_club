@@ -45,13 +45,15 @@ export default function EstoquePage() {
   useEffect(() => {
     fetchProdutos()
     
-    // Atualização automática a cada 10 segundos
+    // Atualização automática a cada 10 segundos (pausada quando modais estão abertos)
     const interval = setInterval(() => {
-      fetchProdutos()
+      if (!mostrarFormulario && !produtoEditando) {
+        fetchProdutos()
+      }
     }, 10000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [mostrarFormulario, produtoEditando])
 
   async function fetchProdutos() {
     try {
