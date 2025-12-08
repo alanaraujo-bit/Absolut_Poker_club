@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Plus, DollarSign, AlertCircle, Check, X, Edit } from 'lucide-react'
+import { Users, Plus, DollarSign, AlertCircle, Check, X, Edit, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -168,6 +168,43 @@ export default function ClientesPage() {
     setEditando({ ...cliente })
     setShowForm(false)
     setPagamentoAberto(null)
+  }
+
+  async function handleExcluirCliente(clienteId: number, clienteNome: string) {
+    if (!confirm(`Tem certeza que deseja excluir o jogador "${clienteNome}"?`)) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/clientes/${clienteId}`, {
+        method: 'DELETE',
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        toast({
+          title: "Jogador excluído!",
+          description: `${clienteNome} foi excluído com sucesso.`,
+        })
+        fetchClientes()
+      } else {
+        toast({
+          title: "Erro ao excluir",
+          description: data.error || "Não foi possível excluir o jogador",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o jogador",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const clientesDevedores = clientes.filter(c => c.saldo < 0)
@@ -415,6 +452,15 @@ export default function ClientesPage() {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleExcluirCliente(cliente.id, cliente.nome)}
+                              className="h-9 text-red-500 hover:text-red-600 hover:border-red-500"
+                              disabled={loading}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                             {cliente.saldo < 0 && (
                               pagamentoAberto === cliente.id ? (
                                 <>
@@ -503,14 +549,24 @@ export default function ClientesPage() {
                     </div>
 
                     <div className="mt-3 pt-3 border-t border-primary/20 space-y-2">
-                      <Button
-                        onClick={() => abrirEdicao(cliente)}
-                        variant="outline"
-                        className="w-full h-11 btn-poker-outline"
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Editar Informações
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => abrirEdicao(cliente)}
+                          variant="outline"
+                          className="flex-1 h-11 btn-poker-outline"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </Button>
+                        <Button
+                          onClick={() => handleExcluirCliente(cliente.id, cliente.nome)}
+                          variant="outline"
+                          className="h-11 px-4 text-red-500 hover:text-red-600 hover:border-red-500 btn-poker-outline"
+                          disabled={loading}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
 
                       {cliente.saldo < 0 && (
                         <>
