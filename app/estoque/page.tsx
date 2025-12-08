@@ -45,6 +45,8 @@ export default function EstoquePage() {
   const [precoVendaEdit, setPrecoVendaEdit] = useState('')
   const [precoCustoEdit, setPrecoCustoEdit] = useState('')
   const [entradaEstoque, setEntradaEstoque] = useState<{ [key: number]: string }>({})
+  const [saidaEstoque, setSaidaEstoque] = useState<{ [key: number]: string }>({})
+  const [observacaoSaida, setObservacaoSaida] = useState<{ [key: number]: string }>({})
   const { toast } = useToast()
 
   useEffect(() => {
@@ -153,6 +155,53 @@ export default function EstoquePage() {
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o estoque",
+        variant: "destructive",
+      })
+    }
+  }
+
+  async function retirarEstoque(produtoId: number) {
+    const quantidade = parseInt(saidaEstoque[produtoId] || '0')
+    const observacao = observacaoSaida[produtoId] || 'Saída manual'
+    
+    if (quantidade <= 0) {
+      toast({
+        title: "Quantidade inválida",
+        description: "Digite uma quantidade maior que zero",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const res = await fetch('/api/estoque', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          produtoId,
+          tipo: 'saida',
+          quantidade,
+          observacao,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        toast({
+          title: "Estoque atualizado!",
+          description: `${quantidade} unidades retiradas`,
+        })
+        setSaidaEstoque({ ...saidaEstoque, [produtoId]: '' })
+        setObservacaoSaida({ ...observacaoSaida, [produtoId]: '' })
+        fetchProdutos()
+      } else {
+        throw new Error(data.error || 'Erro ao retirar estoque')
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível atualizar o estoque",
         variant: "destructive",
       })
     }
@@ -636,21 +685,49 @@ export default function EstoquePage() {
                         )}
                       </div>
                       {produto.estoqueAtual !== null && (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            placeholder="Quantidade"
-                            value={entradaEstoque[produto.id] || ''}
-                            onChange={(e) => setEntradaEstoque({ ...entradaEstoque, [produto.id]: e.target.value })}
-                            className="flex-1"
-                          />
-                          <Button
-                            onClick={() => adicionarEstoque(produto.id)}
-                            className="gap-2"
-                          >
-                            <Plus className="h-4 w-4" />
-                            Adicionar
-                          </Button>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              placeholder="Adicionar"
+                              value={entradaEstoque[produto.id] || ''}
+                              onChange={(e) => setEntradaEstoque({ ...entradaEstoque, [produto.id]: e.target.value })}
+                              className="flex-1"
+                            />
+                            <Button
+                              onClick={() => adicionarEstoque(produto.id)}
+                              className="gap-2 bg-green-600 hover:bg-green-700"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Entrada
+                            </Button>
+                          </div>
+                          <div className="space-y-2">
+                            <Input
+                              type="text"
+                              placeholder="Motivo (consumo, perda, etc)"
+                              value={observacaoSaida[produto.id] || ''}
+                              onChange={(e) => setObservacaoSaida({ ...observacaoSaida, [produto.id]: e.target.value })}
+                              className="text-sm"
+                            />
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                placeholder="Retirar"
+                                value={saidaEstoque[produto.id] || ''}
+                                onChange={(e) => setSaidaEstoque({ ...saidaEstoque, [produto.id]: e.target.value })}
+                                className="flex-1"
+                              />
+                              <Button
+                                onClick={() => retirarEstoque(produto.id)}
+                                variant="destructive"
+                                className="gap-2"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Retirar
+                              </Button>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </CardContent>
@@ -812,32 +889,73 @@ export default function EstoquePage() {
                   </div>
                   <div className="bg-background/30 rounded-lg p-2">
                     <p className="text-xs text-muted-foreground">Estoque</p>
-                    <p className="font-bold text-lg gold-text">
-                      {produto.estoqueAtual}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Mín: {produto.estoqueMinimo}
-                    </p>
+                    {produto.estoqueAtual !== null ? (
+                      <>
+                        <p className="font-bold text-lg gold-text">
+                          {produto.estoqueAtual}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Mín: {produto.estoqueMinimo}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-bold text-sm text-muted-foreground">
+                          N/A
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Sem controle
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* Adicionar Estoque */}
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Quantidade"
-                    value={entradaEstoque[produto.id] || ''}
-                    onChange={(e) => setEntradaEstoque({ ...entradaEstoque, [produto.id]: e.target.value })}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={() => adicionarEstoque(produto.id)}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Adicionar
-                  </Button>
-                </div>
+                {/* Movimentação de Estoque */}
+                {produto.estoqueAtual !== null && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Adicionar"
+                        value={entradaEstoque[produto.id] || ''}
+                        onChange={(e) => setEntradaEstoque({ ...entradaEstoque, [produto.id]: e.target.value })}
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={() => adicionarEstoque(produto.id)}
+                        className="gap-2 bg-green-600 hover:bg-green-700"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Entrada
+                      </Button>
+                    </div>
+                    <Input
+                      type="text"
+                      placeholder="Motivo da retirada"
+                      value={observacaoSaida[produto.id] || ''}
+                      onChange={(e) => setObservacaoSaida({ ...observacaoSaida, [produto.id]: e.target.value })}
+                      className="text-sm"
+                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Retirar"
+                        value={saidaEstoque[produto.id] || ''}
+                        onChange={(e) => setSaidaEstoque({ ...saidaEstoque, [produto.id]: e.target.value })}
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={() => retirarEstoque(produto.id)}
+                        variant="destructive"
+                        className="gap-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Retirar
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
