@@ -46,7 +46,6 @@ export default function EstoquePage() {
   const [precoCustoEdit, setPrecoCustoEdit] = useState('')
   const [entradaEstoque, setEntradaEstoque] = useState<{ [key: number]: string }>({})
   const [saidaEstoque, setSaidaEstoque] = useState<{ [key: number]: string }>({})
-  const [observacaoSaida, setObservacaoSaida] = useState<{ [key: number]: string }>({})
   const { toast } = useToast()
 
   useEffect(() => {
@@ -162,7 +161,6 @@ export default function EstoquePage() {
 
   async function retirarEstoque(produtoId: number) {
     const quantidade = parseInt(saidaEstoque[produtoId] || '0')
-    const observacao = observacaoSaida[produtoId] || 'Saída manual'
     
     if (quantidade <= 0) {
       toast({
@@ -181,7 +179,7 @@ export default function EstoquePage() {
           produtoId,
           tipo: 'saida',
           quantidade,
-          observacao,
+          observacao: 'Saída manual',
         }),
       })
 
@@ -193,7 +191,6 @@ export default function EstoquePage() {
           description: `${quantidade} unidades retiradas`,
         })
         setSaidaEstoque({ ...saidaEstoque, [produtoId]: '' })
-        setObservacaoSaida({ ...observacaoSaida, [produtoId]: '' })
         fetchProdutos()
       } else {
         throw new Error(data.error || 'Erro ao retirar estoque')
@@ -688,50 +685,36 @@ export default function EstoquePage() {
                           </div>
                         )}
                       </div>
-                      {produto.estoqueAtual !== null && (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              placeholder="Adicionar"
-                              value={entradaEstoque[produto.id] || ''}
-                              onChange={(e) => setEntradaEstoque({ ...entradaEstoque, [produto.id]: e.target.value })}
-                              className="flex-1"
-                            />
-                            <Button
-                              onClick={() => adicionarEstoque(produto.id)}
-                              className="gap-2 bg-green-600 hover:bg-green-700"
-                            >
-                              <Plus className="h-4 w-4" />
-                              Entrada
-                            </Button>
-                          </div>
-                          <div className="space-y-2">
-                            <Input
-                              type="text"
-                              placeholder="Motivo (consumo, perda, etc)"
-                              value={observacaoSaida[produto.id] || ''}
-                              onChange={(e) => setObservacaoSaida({ ...observacaoSaida, [produto.id]: e.target.value })}
-                              className="text-sm"
-                            />
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                placeholder="Retirar"
-                                value={saidaEstoque[produto.id] || ''}
-                                onChange={(e) => setSaidaEstoque({ ...saidaEstoque, [produto.id]: e.target.value })}
-                                className="flex-1"
-                              />
-                              <Button
-                                onClick={() => retirarEstoque(produto.id)}
-                                variant="destructive"
-                                className="gap-2"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Retirar
-                              </Button>
-                            </div>
-                          </div>
+                      {produto.estoqueAtual !== null && isAdmin && (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            placeholder="+ Entrada"
+                            value={entradaEstoque[produto.id] || ''}
+                            onChange={(e) => setEntradaEstoque({ ...entradaEstoque, [produto.id]: e.target.value })}
+                            className="flex-1"
+                          />
+                          <Button
+                            onClick={() => adicionarEstoque(produto.id)}
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                          <Input
+                            type="number"
+                            placeholder="- Retirar"
+                            value={saidaEstoque[produto.id] || ''}
+                            onChange={(e) => setSaidaEstoque({ ...saidaEstoque, [produto.id]: e.target.value })}
+                            className="flex-1"
+                          />
+                          <Button
+                            onClick={() => retirarEstoque(produto.id)}
+                            size="sm"
+                            variant="destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       )}
                     </CardContent>
@@ -914,52 +897,6 @@ export default function EstoquePage() {
                     )}
                   </div>
                 </div>
-
-                {/* Movimentação de Estoque */}
-                {produto.estoqueAtual !== null && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        placeholder="Adicionar"
-                        value={entradaEstoque[produto.id] || ''}
-                        onChange={(e) => setEntradaEstoque({ ...entradaEstoque, [produto.id]: e.target.value })}
-                        className="flex-1"
-                      />
-                      <Button
-                        onClick={() => adicionarEstoque(produto.id)}
-                        className="gap-2 bg-green-600 hover:bg-green-700"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Entrada
-                      </Button>
-                    </div>
-                    <Input
-                      type="text"
-                      placeholder="Motivo da retirada"
-                      value={observacaoSaida[produto.id] || ''}
-                      onChange={(e) => setObservacaoSaida({ ...observacaoSaida, [produto.id]: e.target.value })}
-                      className="text-sm"
-                    />
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        placeholder="Retirar"
-                        value={saidaEstoque[produto.id] || ''}
-                        onChange={(e) => setSaidaEstoque({ ...saidaEstoque, [produto.id]: e.target.value })}
-                        className="flex-1"
-                      />
-                      <Button
-                        onClick={() => retirarEstoque(produto.id)}
-                        variant="destructive"
-                        className="gap-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Retirar
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
             </motion.div>
           ))}
