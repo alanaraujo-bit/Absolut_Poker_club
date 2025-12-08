@@ -39,6 +39,21 @@ export async function DELETE(request: Request) {
       })
     }
 
+    if (action === 'clear_pedidos') {
+      console.log('🗑️ Limpando apenas pedidos...')
+
+      // Deletar apenas pedidos e itens de pedidos
+      await prisma.itemPedido.deleteMany()
+      await prisma.pedido.deleteMany()
+
+      console.log('✅ Pedidos limpos com sucesso!')
+
+      return NextResponse.json({
+        success: true,
+        message: 'Todos os pedidos foram removidos!',
+      })
+    }
+
     return NextResponse.json({ error: 'Ação inválida' }, { status: 400 })
   } catch (error) {
     console.error('❌ Erro no gerenciamento do banco:', error)

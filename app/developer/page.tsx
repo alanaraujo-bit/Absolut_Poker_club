@@ -113,6 +113,42 @@ export default function DeveloperPanel() {
     }
   }
 
+  async function handleClearPedidos() {
+    if (!confirm('⚠️ Isso vai DELETAR TODOS OS PEDIDOS. Tem certeza?')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch('/api/dev/database?action=clear_pedidos', {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': devToken 
+        },
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        toast({
+          title: '✅ Pedidos Limpos!',
+          description: data.message,
+        })
+        loadStats()
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (error: any) {
+      toast({
+        title: '❌ Erro',
+        description: error.message || 'Erro ao limpar pedidos',
+        variant: 'destructive',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function handleResetDemo() {
     if (!confirm('Resetar banco para dados de demonstração?')) {
       return
@@ -243,6 +279,14 @@ export default function DeveloperPanel() {
               >
                 <Trash2 className="w-4 h-4" />
                 Limpar Banco Completamente
+              </Button>
+              <Button
+                onClick={handleClearPedidos}
+                disabled={loading}
+                className="w-full gap-2 bg-red-600 hover:bg-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+                Limpar Apenas Pedidos
               </Button>
               <Button
                 onClick={handleResetDemo}
