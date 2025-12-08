@@ -18,7 +18,7 @@ import { useAuth } from '@/lib/auth-context'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard, label: 'Home' },
-  { name: 'Clientes', href: '/clientes', icon: Users, label: 'Clientes' },
+  { name: 'Jogadores', href: '/clientes', icon: Users, label: 'Jogadores' },
   { name: 'Estoque', href: '/estoque', icon: Package, label: 'Estoque' },
   { name: 'Relatórios', href: '/relatorios', icon: BarChart3, label: 'Dados' },
 ]

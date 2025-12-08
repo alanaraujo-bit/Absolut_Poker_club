@@ -76,7 +76,7 @@ export default function ClientesPage() {
 
       if (res.ok) {
         toast({
-          title: "Cliente cadastrado!",
+          title: "Jogador cadastrado!",
           description: `${novoCliente.nome} foi adicionado com sucesso.`,
         })
         setNovoCliente({ nome: '', telefone: '', cpf: '' })
@@ -86,7 +86,7 @@ export default function ClientesPage() {
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Não foi possível cadastrar o cliente",
+        description: "Não foi possível cadastrar o jogador",
         variant: "destructive",
       })
     } finally {
@@ -146,7 +146,7 @@ export default function ClientesPage() {
 
       if (res.ok) {
         toast({
-          title: "Cliente atualizado!",
+          title: "Jogador atualizado!",
           description: `${editando.nome} foi atualizado com sucesso.`,
         })
         setEditando(null)
@@ -155,7 +155,7 @@ export default function ClientesPage() {
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o cliente",
+        description: "Não foi possível atualizar o jogador",
         variant: "destructive",
       })
     } finally {
@@ -179,8 +179,8 @@ export default function ClientesPage() {
       <main className="flex-1 lg:ml-72 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
           <PageHeader 
-            title="Clientes"
-            description="Gerencie clientes e controle de pagamentos"
+            title="Jogadores"
+            description="Gerencie jogadores e controle de pagamentos"
             icon={Users}
           />
 
@@ -190,7 +190,7 @@ export default function ClientesPage() {
               <CardHeader className="pb-2 px-4 pt-4">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                    Total de Clientes
+                    Total de Jogadores
                   </CardTitle>
                   <Users className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                 </div>
@@ -204,7 +204,7 @@ export default function ClientesPage() {
               <CardHeader className="pb-2 px-4 pt-4">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                    Clientes Devedores
+                    Jogadores Devedores
                   </CardTitle>
                   <AlertCircle className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
                 </div>
@@ -229,7 +229,7 @@ export default function ClientesPage() {
             </Card>
           </div>
 
-          {/* Botão Adicionar Cliente */}
+          {/* Botão Adicionar Jogador */}
           <div>
             <Button 
               onClick={() => setShowForm(!showForm)} 
@@ -237,11 +237,11 @@ export default function ClientesPage() {
               size="lg"
             >
               <Plus className="h-5 w-5" />
-              {showForm ? 'Cancelar' : 'Novo Cliente'}
+              {showForm ? 'Cancelar' : 'Novo Jogador'}
             </Button>
           </div>
 
-          {/* Formulário de Novo Cliente */}
+          {/* Formulário de Novo Jogador */}
           {showForm && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -250,7 +250,7 @@ export default function ClientesPage() {
             >
               <Card className="poker-card">
                 <CardHeader className="px-4 pt-4 pb-3">
-                  <CardTitle className="text-base md:text-lg">Cadastrar Novo Cliente</CardTitle>
+                  <CardTitle className="text-base md:text-lg">Cadastrar Novo Jogador</CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4">
                   <form onSubmit={handleCriarCliente} className="space-y-4">
@@ -263,7 +263,7 @@ export default function ClientesPage() {
                           onChange={(e) => setNovoCliente({ ...novoCliente, nome: e.target.value })}
                           required
                           className="h-11"
-                          placeholder="Nome do cliente"
+                          placeholder="Nome do jogador"
                         />
                       </div>
                       <div className="space-y-2">
@@ -288,7 +288,7 @@ export default function ClientesPage() {
                       </div>
                     </div>
                     <Button type="submit" disabled={loading} className="w-full sm:w-auto btn-poker-primary">
-                      {loading ? 'Cadastrando...' : 'Cadastrar Cliente'}
+                      {loading ? 'Cadastrando...' : 'Cadastrar Jogador'}
                     </Button>
                   </form>
                 </CardContent>
@@ -306,7 +306,7 @@ export default function ClientesPage() {
               <Card className="poker-card border-primary/50">
                 <CardHeader className="px-4 pt-4 pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base md:text-lg">Editar Cliente</CardTitle>
+                    <CardTitle className="text-base md:text-lg">Editar Jogador</CardTitle>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -328,7 +328,7 @@ export default function ClientesPage() {
                           onChange={(e) => setEditando({ ...editando, nome: e.target.value })}
                           required
                           className="h-11"
-                          placeholder="Nome do cliente"
+                          placeholder="Nome do jogador"
                         />
                       </div>
                       <div className="space-y-2">
@@ -371,12 +371,12 @@ export default function ClientesPage() {
             </motion.div>
           )}
 
-          {/* Lista de Clientes - Mobile Card Layout */}
+          {/* Lista de Jogadores - Mobile Card Layout */}
           <Card className="poker-card">
             <CardHeader className="px-4 pt-4 pb-3">
-              <CardTitle className="text-base md:text-lg">Lista de Clientes</CardTitle>
+              <CardTitle className="text-base md:text-lg">Lista de Jogadores</CardTitle>
               <CardDescription className="text-xs md:text-sm">
-                {clientes.length > 0 ? 'Toque em "Receber" para registrar pagamento' : 'Nenhum cliente cadastrado ainda'}
+                {clientes.length > 0 ? 'Toque em "Receber" para registrar pagamento' : 'Nenhum jogador cadastrado ainda'}
               </CardDescription>
             </CardHeader>
             <CardContent className="px-2 md:px-4 pb-4">
@@ -463,7 +463,7 @@ export default function ClientesPage() {
                     {clientes.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                          Nenhum cliente cadastrado
+                          Nenhum jogador cadastrado
                         </TableCell>
                       </TableRow>
                     )}
@@ -563,8 +563,8 @@ export default function ClientesPage() {
                 {clientes.length === 0 && (
                   <div className="text-center py-12">
                     <Users className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                    <p className="text-muted-foreground text-sm">Nenhum cliente cadastrado</p>
-                    <p className="text-xs text-muted-foreground mt-1">Clique em "Novo Cliente" para começar</p>
+                    <p className="text-muted-foreground text-sm">Nenhum jogador cadastrado</p>
+                    <p className="text-xs text-muted-foreground mt-1">Clique em "Novo Jogador" para começar</p>
                   </div>
                 )}
               </div>

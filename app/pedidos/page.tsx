@@ -179,7 +179,7 @@ export default function PedidosPage() {
         
         const statusPagamento = pagoAVista ? "à vista" : "fiado"
         const clienteInfo = clienteSelecionado 
-          ? ` - Cliente: ${clientes.find(c => c.id === clienteSelecionado)?.nome}` 
+          ? ` - Jogador: ${clientes.find(c => c.id === clienteSelecionado)?.nome}` 
           : ""
         
         toast({
@@ -342,25 +342,25 @@ export default function PedidosPage() {
                     </div>
                   </div>
 
-                  {/* Seleção de Cliente */}
+                  {/* Seleção de Jogador */}
                   <div className="space-y-3 mb-4 pb-4 border-b border-white/10">
                     <Label className="flex items-center gap-2 text-sm font-medium">
                       <User className="h-4 w-4" />
-                      Cliente (Opcional)
+                      Jogador (Opcional)
                     </Label>
                     
                     {/* Campo de busca */}
                     <div className="relative">
                       <Input
                         type="text"
-                        placeholder="Buscar cliente ou venda sem cliente..."
+                        placeholder="Buscar jogador ou venda sem jogador..."
                         value={searchCliente}
                         onChange={(e) => setSearchCliente(e.target.value)}
                         className="w-full bg-white/5 border-white/10 focus:border-absolut-gold"
                       />
                     </div>
 
-                    {/* Lista de clientes filtrados */}
+                    {/* Lista de jogadores filtrados */}
                     {searchCliente && (
                       <div className="max-h-48 overflow-y-auto space-y-1 p-2 rounded-lg bg-white/5 border border-white/10">
                         <button
@@ -370,7 +370,7 @@ export default function PedidosPage() {
                           }}
                           className="w-full text-left p-2 rounded hover:bg-white/10 transition-colors text-sm"
                         >
-                          <span className="text-muted-foreground">Venda sem cliente</span>
+                          <span className="text-muted-foreground">Venda sem jogador</span>
                         </button>
                         {clientes
                           .filter(c => c.nome.toLowerCase().includes(searchCliente.toLowerCase()))
@@ -394,7 +394,7 @@ export default function PedidosPage() {
                       </div>
                     )}
 
-                    {/* Cliente selecionado */}
+                    {/* Jogador selecionado */}
                     {clienteSelecionado && !searchCliente && (
                       <div className="p-3 rounded-lg bg-absolut-gold/10 border border-absolut-gold/30">
                         <div className="flex items-center justify-between mb-2">
