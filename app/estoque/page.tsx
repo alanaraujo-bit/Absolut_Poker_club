@@ -2,17 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, AlertTriangle, Package, FileDown, Trash2, Edit, X } from 'lucide-react'
+import { Plus, AlertTriangle, Package, FileDown, Trash2, Edit, X, ArrowLeft } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatCurrency } from '@/lib/utils'
-import Sidebar from '@/components/sidebar'
-import PageHeader from '@/components/page-header'
 import { useToast } from '@/components/ui/use-toast'
 import { generateEstoquePDF } from '@/lib/pdf-generator'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 
 interface Produto {
   id: number
@@ -25,8 +24,11 @@ interface Produto {
 }
 
 export default function EstoquePage() {
+  const router = useRouter()
+  const { usuario } = useAuth()
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [loading, setLoading] = useState(false)
+  const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [novoProduto, setNovoProduto] = useState({
     nome: '',
     precoVenda: '',
@@ -90,6 +92,7 @@ export default function EstoquePage() {
           estoqueInicial: '',
           estoqueMinimo: '',
         })
+        setMostrarFormulario(false)
         fetchProdutos()
       }
     } catch (error) {
@@ -214,334 +217,370 @@ export default function EstoquePage() {
   const produtosComEstoqueBaixo = produtos.filter(p => p.estoqueAtual <= p.estoqueMinimo)
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      
-      <main className="flex-1 lg:ml-80 p-8">
-        <div className="max-w-7xl mx-auto">
-          <PageHeader 
-            title="Estoque"
-            description="Controle de produtos e movimentações"
-            icon={Package}
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold gold-text mb-2">Gerenciar Estoque</h1>
-                <p className="text-muted-foreground">Controle de produtos e movimentações</p>
-              </div>
-              <Button 
-                onClick={() => generateEstoquePDF(produtos)}
-                size="lg"
-                variant="outline"
-                className="gap-2"
-              >
-                <FileDown className="h-5 w-5" />
-                Exportar PDF
-              </Button>
-            </div>
-          </motion.div>
-
-          {/* Alerta de Estoque Baixo */}
-          {produtosComEstoqueBaixo.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6"
+    <div className="min-h-screen bg-gradient-to-b from-poker-green to-poker-green-dark pb-20">
+      {/* Header Mobile */}
+      <header className="glass-dark border-b border-primary/20 p-4 sticky top-0 z-30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/garcom')}
+              className="p-2 rounded-lg hover:bg-primary/10 transition-all"
             >
-              <Card className="border-orange-500/50 bg-orange-500/10">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle className="h-6 w-6 text-orange-500" />
-                    <div>
-                      <CardTitle>Atenção: {produtosComEstoqueBaixo.length} produto(s) com estoque baixo</CardTitle>
-                      <CardDescription>Verifique os itens marcados abaixo</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            </motion.div>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Cadastro de Produto */}
-            <div className="lg:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Plus className="h-5 w-5" />
-                    Novo Produto
-                  </CardTitle>
-                  <CardDescription>Cadastrar novo item no estoque</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={criarProduto} className="space-y-4">
-                    <div>
-                      <Label htmlFor="nome">Nome do Produto</Label>
-                      <Input
-                        id="nome"
-                        value={novoProduto.nome}
-                        onChange={(e) => setNovoProduto({ ...novoProduto, nome: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="precoVenda">Preço de Venda</Label>
-                      <Input
-                        id="precoVenda"
-                        type="number"
-                        step="0.01"
-                        value={novoProduto.precoVenda}
-                        onChange={(e) => setNovoProduto({ ...novoProduto, precoVenda: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="precoCusto">Preço de Custo</Label>
-                      <Input
-                        id="precoCusto"
-                        type="number"
-                        step="0.01"
-                        value={novoProduto.precoCusto}
-                        onChange={(e) => setNovoProduto({ ...novoProduto, precoCusto: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="estoqueInicial">Estoque Inicial</Label>
-                      <Input
-                        id="estoqueInicial"
-                        type="number"
-                        value={novoProduto.estoqueInicial}
-                        onChange={(e) => setNovoProduto({ ...novoProduto, estoqueInicial: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="estoqueMinimo">Estoque Mínimo</Label>
-                      <Input
-                        id="estoqueMinimo"
-                        type="number"
-                        value={novoProduto.estoqueMinimo}
-                        onChange={(e) => setNovoProduto({ ...novoProduto, estoqueMinimo: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? 'Cadastrando...' : 'Cadastrar Produto'}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Lista de Produtos */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Produtos em Estoque
-                  </CardTitle>
-                  <CardDescription>{produtos.length} produto(s) cadastrado(s)</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Produto</TableHead>
-                        <TableHead>Preço</TableHead>
-                        <TableHead>Estoque</TableHead>
-                        <TableHead>Adicionar</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {produtos.map((produto) => (
-                        <TableRow
-                          key={produto.id}
-                          className={produto.estoqueAtual <= produto.estoqueMinimo ? 'border-l-4 border-l-orange-500' : ''}
-                        >
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{produto.nome}</div>
-                              {produto.estoqueAtual <= produto.estoqueMinimo && (
-                                <div className="flex items-center gap-1 text-xs text-orange-500 mt-1">
-                                  <AlertTriangle className="h-3 w-3" />
-                                  Estoque baixo
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-bold">{formatCurrency(Number(produto.precoVenda))}</div>
-                              <div className="text-xs text-muted-foreground">
-                                Custo: {formatCurrency(Number(produto.precoCusto))}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-bold text-lg">
-                              {produto.estoqueAtual}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Mín: {produto.estoqueMinimo}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                placeholder="Qtd"
-                                value={entradaEstoque[produto.id] || ''}
-                                onChange={(e) => setEntradaEstoque({ ...entradaEstoque, [produto.id]: e.target.value })}
-                                className="w-20"
-                              />
-                              <Button
-                                size="sm"
-                                onClick={() => adicionarEstoque(produto.id)}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setProdutoEditando(produto)}
-                                title="Editar produto"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => excluirProduto(produto.id, produto.nome)}
-                                title="Excluir produto"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-primary" />
+                <h1 className="text-lg font-bold gold-text">Estoque</h1>
+              </div>
+              <p className="text-xs text-muted-foreground">{produtos.length} produto(s)</p>
             </div>
           </div>
+          <Button 
+            onClick={() => generateEstoquePDF(produtos)}
+            size="sm"
+            variant="outline"
+            className="gap-2"
+          >
+            <FileDown className="h-4 w-4" />
+          </Button>
+        </div>
+      </header>
 
-          {/* Modal de Edição */}
-          {produtoEditando && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-card rounded-lg shadow-xl max-w-md w-full"
+      <div className="p-4 space-y-4">
+        {/* Alerta de Estoque Baixo */}
+        {produtosComEstoqueBaixo.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-poker border border-orange-500/30 rounded-xl p-4"
+          >
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-orange-400 flex-shrink-0" />
+              <div>
+                <p className="font-bold text-orange-400">Atenção!</p>
+                <p className="text-sm text-muted-foreground">
+                  {produtosComEstoqueBaixo.length} produto(s) com estoque baixo
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Botão Novo Produto */}
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => setMostrarFormulario(true)}
+          className="w-full glass-poker rounded-xl p-4 hover:scale-[1.02] active:scale-[0.98] transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Plus className="w-6 h-6 text-primary" />
+            </div>
+            <div className="text-left">
+              <p className="font-bold gold-text">Novo Produto</p>
+              <p className="text-sm text-muted-foreground">Cadastrar item no estoque</p>
+            </div>
+          </div>
+        </motion.button>
+
+        {/* Lista de Produtos */}
+        <div className="space-y-3">
+          {produtos.map((produto, index) => (
+            <motion.div
+              key={produto.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className={`glass-poker rounded-xl p-4 ${
+                produto.estoqueAtual <= produto.estoqueMinimo 
+                  ? 'border-l-4 border-l-orange-500' 
+                  : ''
+              }`}
+            >
+              <div className="space-y-3">
+                {/* Cabeçalho do Produto */}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold gold-text truncate">{produto.nome}</h3>
+                    {produto.estoqueAtual <= produto.estoqueMinimo && (
+                      <div className="flex items-center gap-1 text-xs text-orange-400 mt-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Estoque baixo
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 ml-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setProdutoEditando(produto)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => excluirProduto(produto.id, produto.nome)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Info do Produto */}
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="bg-background/30 rounded-lg p-2">
+                    <p className="text-xs text-muted-foreground">Venda</p>
+                    <p className="font-bold text-primary text-sm">
+                      {formatCurrency(Number(produto.precoVenda))}
+                    </p>
+                  </div>
+                  <div className="bg-background/30 rounded-lg p-2">
+                    <p className="text-xs text-muted-foreground">Custo</p>
+                    <p className="font-bold text-sm">
+                      {formatCurrency(Number(produto.precoCusto))}
+                    </p>
+                  </div>
+                  <div className="bg-background/30 rounded-lg p-2">
+                    <p className="text-xs text-muted-foreground">Estoque</p>
+                    <p className="font-bold text-lg gold-text">
+                      {produto.estoqueAtual}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Mín: {produto.estoqueMinimo}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Adicionar Estoque */}
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Quantidade"
+                    value={entradaEstoque[produto.id] || ''}
+                    onChange={(e) => setEntradaEstoque({ ...entradaEstoque, [produto.id]: e.target.value })}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={() => adicionarEstoque(produto.id)}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Adicionar
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {produtos.length === 0 && (
+          <div className="text-center py-12">
+            <Package className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
+            <p className="text-muted-foreground">Nenhum produto cadastrado</p>
+          </div>
+        )}
+      </div>
+
+      {/* Modal Novo Produto */}
+      {mostrarFormulario && (
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card rounded-t-3xl sm:rounded-xl shadow-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto"
+          >
+            <div className="sticky top-0 glass-dark border-b border-primary/20 p-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-xl">
+              <div className="flex items-center gap-2">
+                <Plus className="h-5 w-5 text-primary" />
+                <h2 className="font-bold gold-text">Novo Produto</h2>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setMostrarFormulario(false)}
               >
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2">
-                        <Edit className="h-5 w-5" />
-                        Editar Produto
-                      </CardTitle>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setProdutoEditando(null)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <form onSubmit={criarProduto} className="p-4 space-y-4">
+              <div>
+                <Label htmlFor="nome">Nome do Produto</Label>
+                <Input
+                  id="nome"
+                  value={novoProduto.nome}
+                  onChange={(e) => setNovoProduto({ ...novoProduto, nome: e.target.value })}
+                  required
+                  placeholder="Ex: Cerveja Heineken"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="precoVenda">Preço de Venda</Label>
+                  <Input
+                    id="precoVenda"
+                    type="number"
+                    step="0.01"
+                    value={novoProduto.precoVenda}
+                    onChange={(e) => setNovoProduto({ ...novoProduto, precoVenda: e.target.value })}
+                    required
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="precoCusto">Preço de Custo</Label>
+                  <Input
+                    id="precoCusto"
+                    type="number"
+                    step="0.01"
+                    value={novoProduto.precoCusto}
+                    onChange={(e) => setNovoProduto({ ...novoProduto, precoCusto: e.target.value })}
+                    required
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="estoqueInicial">Estoque Inicial</Label>
+                  <Input
+                    id="estoqueInicial"
+                    type="number"
+                    value={novoProduto.estoqueInicial}
+                    onChange={(e) => setNovoProduto({ ...novoProduto, estoqueInicial: e.target.value })}
+                    required
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="estoqueMinimo">Estoque Mínimo</Label>
+                  <Input
+                    id="estoqueMinimo"
+                    type="number"
+                    value={novoProduto.estoqueMinimo}
+                    onChange={(e) => setNovoProduto({ ...novoProduto, estoqueMinimo: e.target.value })}
+                    required
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setMostrarFormulario(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" className="flex-1" disabled={loading}>
+                  {loading ? 'Cadastrando...' : 'Cadastrar'}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Modal de Edição */}
+      {produtoEditando && (
+            <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+              <motion.div
+                initial={{ opacity: 0, y: 100 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-card rounded-t-3xl sm:rounded-xl shadow-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto"
+              >
+                <div className="sticky top-0 glass-dark border-b border-primary/20 p-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-xl">
+                  <div className="flex items-center gap-2">
+                    <Edit className="h-5 w-5 text-primary" />
+                    <h2 className="font-bold gold-text">Editar Produto</h2>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setProdutoEditando(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <form onSubmit={editarProduto} className="p-4 space-y-4">
+                  <div>
+                    <Label htmlFor="edit-nome">Nome do Produto</Label>
+                    <Input
+                      id="edit-nome"
+                      value={produtoEditando.nome}
+                      onChange={(e) => setProdutoEditando({ ...produtoEditando, nome: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="edit-precoVenda">Preço de Venda</Label>
+                      <Input
+                        id="edit-precoVenda"
+                        type="number"
+                        step="0.01"
+                        value={produtoEditando.precoVenda}
+                        onChange={(e) => setProdutoEditando({ ...produtoEditando, precoVenda: parseFloat(e.target.value) })}
+                        required
+                      />
                     </div>
-                    <CardDescription>Alterar informações do produto</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={editarProduto} className="space-y-4">
-                      <div>
-                        <Label htmlFor="edit-nome">Nome do Produto</Label>
-                        <Input
-                          id="edit-nome"
-                          value={produtoEditando.nome}
-                          onChange={(e) => setProdutoEditando({ ...produtoEditando, nome: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="edit-precoVenda">Preço de Venda</Label>
-                        <Input
-                          id="edit-precoVenda"
-                          type="number"
-                          step="0.01"
-                          value={produtoEditando.precoVenda}
-                          onChange={(e) => setProdutoEditando({ ...produtoEditando, precoVenda: parseFloat(e.target.value) })}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="edit-precoCusto">Preço de Custo</Label>
-                        <Input
-                          id="edit-precoCusto"
-                          type="number"
-                          step="0.01"
-                          value={produtoEditando.precoCusto}
-                          onChange={(e) => setProdutoEditando({ ...produtoEditando, precoCusto: parseFloat(e.target.value) })}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="edit-estoqueAtual">Estoque Atual</Label>
-                        <Input
-                          id="edit-estoqueAtual"
-                          type="number"
-                          value={produtoEditando.estoqueAtual}
-                          disabled
-                          className="bg-muted"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Use "Adicionar" na tabela para alterar o estoque
-                        </p>
-                      </div>
-                      <div>
-                        <Label htmlFor="edit-estoqueMinimo">Estoque Mínimo</Label>
-                        <Input
-                          id="edit-estoqueMinimo"
-                          type="number"
-                          value={produtoEditando.estoqueMinimo}
-                          onChange={(e) => setProdutoEditando({ ...produtoEditando, estoqueMinimo: parseInt(e.target.value) })}
-                          required
-                        />
-                      </div>
-                      <div className="flex gap-2 pt-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => setProdutoEditando(null)}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button type="submit" className="flex-1" disabled={loading}>
-                          {loading ? 'Salvando...' : 'Salvar Alterações'}
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
+                    <div>
+                      <Label htmlFor="edit-precoCusto">Preço de Custo</Label>
+                      <Input
+                        id="edit-precoCusto"
+                        type="number"
+                        step="0.01"
+                        value={produtoEditando.precoCusto}
+                        onChange={(e) => setProdutoEditando({ ...produtoEditando, precoCusto: parseFloat(e.target.value) })}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-estoqueAtual">Estoque Atual</Label>
+                    <Input
+                      id="edit-estoqueAtual"
+                      type="number"
+                      value={produtoEditando.estoqueAtual}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Use "Adicionar" para alterar o estoque
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-estoqueMinimo">Estoque Mínimo</Label>
+                    <Input
+                      id="edit-estoqueMinimo"
+                      type="number"
+                      value={produtoEditando.estoqueMinimo}
+                      onChange={(e) => setProdutoEditando({ ...produtoEditando, estoqueMinimo: parseInt(e.target.value) })}
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => setProdutoEditando(null)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" className="flex-1" disabled={loading}>
+                      {loading ? 'Salvando...' : 'Salvar'}
+                    </Button>
+                  </div>
+                </form>
               </motion.div>
             </div>
           )}
-        </div>
-      </main>
     </div>
   )
 }
