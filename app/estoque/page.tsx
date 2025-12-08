@@ -415,7 +415,7 @@ export default function EstoquePage() {
   )
 
   // Renderização para Admin (com Sidebar)
-  if (isAdmin()) {
+  if (isAdmin) {
     return (
       <div className="flex min-h-screen">
         <Sidebar />
@@ -426,18 +426,7 @@ export default function EstoquePage() {
               title="Estoque"
               description="Controle de produtos e movimentações"
               icon={Package}
-            />
-            
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-8"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl md:text-4xl font-bold gold-text mb-2">Gerenciar Estoque</h1>
-                  <p className="text-muted-foreground">Controle de produtos e movimentações</p>
-                </div>
+              actions={
                 <Button 
                   onClick={() => generateEstoquePDF(produtos)}
                   size="lg"
@@ -447,8 +436,8 @@ export default function EstoquePage() {
                   <FileDown className="h-5 w-5" />
                   <span className="hidden sm:inline">Exportar PDF</span>
                 </Button>
-              </div>
-            </motion.div>
+              }
+            />
 
             {/* Alerta de Estoque Baixo */}
             {produtosComEstoqueBaixo.length > 0 && (
