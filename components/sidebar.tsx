@@ -158,40 +158,42 @@ export default function Sidebar() {
 
       {/* Mobile Bottom Navigation - APENAS ESTE NO MOBILE */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 glass-dark border-t border-primary/20 z-40 safe-area-inset-bottom">
-        <div className="grid grid-cols-5 gap-0">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href
-            const Icon = item.icon
-            
-            return (
-              <Link key={item.name} href={item.href}>
-                <motion.div
-                  whileTap={{ scale: 0.92 }}
-                  className={`
-                    flex flex-col items-center justify-center gap-1 py-3 px-2
-                    transition-all touch-feedback min-h-[68px]
-                    ${isActive 
-                      ? 'text-primary' 
-                      : 'text-muted-foreground active:text-foreground'
-                    }
-                  `}
-                >
-                  <div className={`
-                    p-2 rounded-xl transition-all
-                    ${isActive 
-                      ? 'bg-primary/20' 
-                      : 'bg-transparent'
-                    }
-                  `}>
-                    <Icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
-                  </div>
-                  <span className={`text-[10px] font-semibold leading-tight text-center ${isActive ? 'gold-text' : ''}`}>
-                    {item.label}
-                  </span>
-                </motion.div>
-              </Link>
-            )
-          })}
+        <div className="flex justify-center items-center">
+          <div className="grid grid-cols-4 gap-0 max-w-md">
+            {navigation.map((item) => {
+              const isActive = pathname === item.href
+              const Icon = item.icon
+              
+              return (
+                <Link key={item.name} href={item.href}>
+                  <motion.div
+                    whileTap={{ scale: 0.92 }}
+                    className={`
+                      flex flex-col items-center justify-center gap-1 py-3 px-4
+                      transition-all touch-feedback min-h-[68px]
+                      ${isActive 
+                        ? 'text-primary' 
+                        : 'text-muted-foreground active:text-foreground'
+                      }
+                    `}
+                  >
+                    <div className={`
+                      p-2 rounded-xl transition-all
+                      ${isActive 
+                        ? 'bg-primary/20' 
+                        : 'bg-transparent'
+                      }
+                    `}>
+                      <Icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
+                    </div>
+                    <span className={`text-[10px] font-semibold leading-tight text-center ${isActive ? 'gold-text' : ''}`}>
+                      {item.label}
+                    </span>
+                  </motion.div>
+                </Link>
+              )
+            })}
+          </div>
         </div>
       </nav>
     </>
