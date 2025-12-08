@@ -222,11 +222,13 @@ export default function EstoquePage() {
 
   // Componente de Modal Novo Produto (Reutilizável)
   const ModalNovoProduto = () => (
-    <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 100 }}
-        animate={{ opacity: 1, y: 0 }}
+    <div 
+      className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+      onClick={() => setMostrarFormulario(false)}
+    >
+      <div
         className="bg-card rounded-t-3xl sm:rounded-xl shadow-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 glass-dark border-b border-primary/20 p-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-xl">
           <div className="flex items-center gap-2">
@@ -316,17 +318,19 @@ export default function EstoquePage() {
             </Button>
           </div>
         </form>
-      </motion.div>
+      </div>
     </div>
   )
 
   // Componente de Modal Editar Produto (Reutilizável)
   const ModalEditarProduto = () => (
-    <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 100 }}
-        animate={{ opacity: 1, y: 0 }}
+    <div 
+      className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+      onClick={() => setProdutoEditando(null)}
+    >
+      <div
         className="bg-card rounded-t-3xl sm:rounded-xl shadow-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 glass-dark border-b border-primary/20 p-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-xl">
           <div className="flex items-center gap-2">
@@ -412,7 +416,7 @@ export default function EstoquePage() {
             </Button>
           </div>
         </form>
-      </motion.div>
+      </div>
     </div>
   )
 
