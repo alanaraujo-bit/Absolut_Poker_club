@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { TrendingUp, ShoppingBag, Package, AlertTriangle, LayoutDashboard } from 'lucide-react'
+import { TrendingUp, ShoppingBag, Package, AlertTriangle, LayoutDashboard, LogOut } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import Sidebar from '@/components/sidebar'
 import PageHeader from '@/components/page-header'
+import { useAuth } from '@/lib/auth-context'
 
 interface DashboardStats {
   totalVendidoHoje: number
@@ -25,6 +26,7 @@ export default function Home() {
     estoquesBaixos: 0,
   })
   const [loading, setLoading] = useState(true)
+  const { logout } = useAuth()
 
   useEffect(() => {
     fetchStats()
@@ -95,15 +97,26 @@ export default function Home() {
       {/* Main content - Padding apenas para bottom nav mobile */}
       <main className="flex-1 lg:ml-72 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <PageHeader 
               title="Dashboard ACATH"
               description="Associação Canaense Absolut de Texas Hold'em"
               icon={LayoutDashboard}
             />
-            <div className="flex items-center gap-2 text-xs text-green-500">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="hidden md:inline">Atualização em tempo real</span>
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-2 text-xs text-green-500">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span>Atualização em tempo real</span>
+              </div>
+              <Button
+                onClick={logout}
+                variant="outline"
+                size="sm"
+                className="lg:hidden flex items-center gap-2 border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sair</span>
+              </Button>
             </div>
           </div>
 
