@@ -8,8 +8,15 @@ export async function GET() {
       orderBy: { nome: 'asc' }
     })
     
-    return NextResponse.json(clientes)
+    // Converter Decimal para number
+    const clientesFormatados = clientes.map(c => ({
+      ...c,
+      saldo: Number(c.saldo)
+    }))
+    
+    return NextResponse.json(clientesFormatados)
   } catch (error) {
+    console.error('Erro ao buscar clientes:', error)
     return NextResponse.json({ error: 'Erro ao buscar clientes' }, { status: 500 })
   }
 }
@@ -19,16 +26,24 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { nome, telefone, cpf } = body
 
+    if (!nome || !nome.trim()) {
+      return NextResponse.json({ error: 'Nome é obrigatório' }, { status: 400 })
+    }
+
     const cliente = await prisma.cliente.create({
       data: {
-        nome,
-        telefone: telefone || null,
-        cpf: cpf || null
+        nome: nome.trim(),
+        telefone: telefone?.trim() || null,
+        cpf: cpf?.trim() || null
       }
     })
 
-    return NextResponse.json(cliente)
+    return NextResponse.json({
+      ...cliente,
+      saldo: Number(cliente.saldo)
+    })
   } catch (error) {
+    console.error('Erro ao criar cliente:', error)
     return NextResponse.json({ error: 'Erro ao criar cliente' }, { status: 500 })
   }
 }
