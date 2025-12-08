@@ -78,10 +78,6 @@ export function generatePixPayload(config: PixConfig): string {
   let merchantAccount = formatEMV('00', 'BR.GOV.BCB.PIX')
   merchantAccount += formatEMV('01', chavePix)
   
-  if (config.description) {
-    merchantAccount += formatEMV('02', config.description)
-  }
-  
   payload += formatEMV('26', merchantAccount)
 
   // Merchant Category Code (0000 = não especificado)
@@ -135,10 +131,13 @@ export function generatePixForComanda(
   comandaId: number,
   valor: number
 ): string {
+  // Gera um txid único com timestamp para evitar duplicação
+  const timestamp = Date.now().toString().slice(-8)
+  const txid = `C${comandaId.toString().padStart(6, '0')}${timestamp}`
+  
   return generatePixPayload({
     ...DEFAULT_PIX_CONFIG,
     valor,
-    txid: `CMD${comandaId.toString().padStart(8, '0')}`,
-    description: `Comanda #${comandaId}`,
+    txid: txid.substring(0, 25), // Limita a 25 caracteres
   })
 }

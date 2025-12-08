@@ -61,15 +61,32 @@ export default function FecharComandaPage({ params }: { params: { id: string } }
 
   const copiarCodigoPix = async () => {
     try {
-      await navigator.clipboard.writeText(pixPayload)
+      // Tenta usar o Clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(pixPayload)
+      } else {
+        // Fallback para método antigo
+        const textArea = document.createElement('textarea')
+        textArea.value = pixPayload
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        textArea.style.top = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+      
       toast({
         title: '✅ Código copiado!',
         description: 'Cole no app do seu banco para pagar',
       })
     } catch (error) {
+      console.error('Erro ao copiar:', error)
       toast({
         title: '❌ Erro ao copiar',
-        description: 'Tente novamente',
+        description: 'Tente selecionar e copiar manualmente',
         variant: 'destructive',
       })
     }
