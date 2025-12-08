@@ -56,6 +56,7 @@
   html {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
   }
   
   body {
@@ -64,6 +65,18 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+  }
+
+  /* Prevenir zoom em inputs no mobile */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px !important;
   }
 
   /* Scrollbar styling */
