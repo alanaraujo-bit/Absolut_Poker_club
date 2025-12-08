@@ -149,6 +149,42 @@ export default function DeveloperPanel() {
     }
   }
 
+  async function handleClearVendas() {
+    if (!confirm('⚠️ Isso vai DELETAR TODAS AS VENDAS (comandas fechadas) e RESETAR SALDOS DOS CLIENTES. Tem certeza?')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch('/api/dev/database?action=clear_vendas', {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': devToken 
+        },
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        toast({
+          title: '✅ Vendas Limpas!',
+          description: data.message,
+        })
+        loadStats()
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (error: any) {
+      toast({
+        title: '❌ Erro',
+        description: error.message || 'Erro ao limpar vendas',
+        variant: 'destructive',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function handleResetDemo() {
     if (!confirm('Resetar banco para dados de demonstração?')) {
       return
@@ -281,9 +317,17 @@ export default function DeveloperPanel() {
                 Limpar Banco Completamente
               </Button>
               <Button
-                onClick={handleClearPedidos}
+                onClick={handleClearVendas}
                 disabled={loading}
                 className="w-full gap-2 bg-red-600 hover:bg-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+                Limpar Vendas e Resetar Saldos
+              </Button>
+              <Button
+                onClick={handleClearPedidos}
+                disabled={loading}
+                className="w-full gap-2 bg-red-500 hover:bg-red-600"
               >
                 <Trash2 className="w-4 h-4" />
                 Limpar Apenas Pedidos

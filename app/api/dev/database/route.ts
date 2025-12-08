@@ -54,6 +54,40 @@ export async function DELETE(request: Request) {
       })
     }
 
+    if (action === 'clear_vendas') {
+      console.log('🗑️ Limpando vendas (comandas fechadas)...')
+
+      // Deletar apenas comandas fechadas e seus itens
+      const comandasFechadas = await prisma.comanda.findMany({
+        where: { status: 'fechada' },
+        select: { id: true }
+      })
+
+      const comandasFechadasIds = comandasFechadas.map(c => c.id)
+
+      // Deletar itens das comandas fechadas
+      await prisma.itemComanda.deleteMany({
+        where: { comandaId: { in: comandasFechadasIds } }
+      })
+
+      // Deletar comandas fechadas
+      await prisma.comanda.deleteMany({
+        where: { status: 'fechada' }
+      })
+
+      // Resetar saldo de todos os clientes para 0
+      await prisma.cliente.updateMany({
+        data: { saldo: 0 }
+      })
+
+      console.log('✅ Vendas limpas com sucesso!')
+
+      return NextResponse.json({
+        success: true,
+        message: 'Todas as vendas foram removidas e saldos resetados!',
+      })
+    }
+
     return NextResponse.json({ error: 'Ação inválida' }, { status: 400 })
   } catch (error) {
     console.error('❌ Erro no gerenciamento do banco:', error)
