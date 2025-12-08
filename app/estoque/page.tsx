@@ -611,12 +611,16 @@ export default function EstoquePage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card className={produto.estoqueAtual <= produto.estoqueMinimo ? 'border-l-4 border-l-orange-500' : ''}>
+                  <Card className={
+                    produto.estoqueAtual !== null && produto.estoqueMinimo !== null && produto.estoqueAtual <= produto.estoqueMinimo 
+                      ? 'border-l-4 border-l-orange-500' 
+                      : ''
+                  }>
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <CardTitle className="truncate">{produto.nome}</CardTitle>
-                          {produto.estoqueAtual <= produto.estoqueMinimo && (
+                          {produto.estoqueAtual !== null && produto.estoqueMinimo !== null && produto.estoqueAtual <= produto.estoqueMinimo && (
                             <div className="flex items-center gap-1 text-xs text-orange-500 mt-1">
                               <AlertTriangle className="h-3 w-3" />
                               Estoque baixo
@@ -831,7 +835,7 @@ export default function EstoquePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               className={`glass-poker rounded-xl p-4 ${
-                produto.estoqueAtual <= produto.estoqueMinimo 
+                produto.estoqueAtual !== null && produto.estoqueMinimo !== null && produto.estoqueAtual <= produto.estoqueMinimo
                   ? 'border-l-4 border-l-orange-500' 
                   : ''
               }`}
@@ -841,7 +845,7 @@ export default function EstoquePage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold gold-text truncate">{produto.nome}</h3>
-                    {produto.estoqueAtual <= produto.estoqueMinimo && (
+                    {produto.estoqueAtual !== null && produto.estoqueMinimo !== null && produto.estoqueAtual <= produto.estoqueMinimo && (
                       <div className="flex items-center gap-1 text-xs text-orange-400 mt-1">
                         <AlertTriangle className="h-3 w-3" />
                         Estoque baixo
