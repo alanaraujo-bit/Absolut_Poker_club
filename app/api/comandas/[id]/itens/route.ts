@@ -11,6 +11,12 @@ export async function POST(
     const comandaId = parseInt(id)
     const { produtoId, quantidade } = await request.json()
 
+    // Validar quantidade
+    const qtd = typeof quantidade === 'string' ? parseFloat(quantidade) : quantidade
+    if (isNaN(qtd) || qtd <= 0) {
+      return NextResponse.json({ error: 'Quantidade inválida' }, { status: 400 })
+    }
+
     // Verificar se comanda está aberta
     const comanda = await prisma.comanda.findUnique({
       where: { id: comandaId },
@@ -34,14 +40,14 @@ export async function POST(
     }
 
     const precoUnitario = Number(produto.precoVenda)
-    const subtotal = precoUnitario * quantidade
+    const subtotal = precoUnitario * qtd
 
     // Adicionar item
     const item = await prisma.itemComanda.create({
       data: {
         comandaId,
         produtoId,
-        quantidade,
+        quantidade: qtd,
         precoUnitario: produto.precoVenda,
         subtotal,
       },
@@ -65,7 +71,7 @@ export async function POST(
       where: { id: produtoId },
       data: {
         estoqueAtual: {
-          decrement: quantidade,
+          decrement: Math.ceil(qtd), // Arredonda para cima para controle de estoque
         },
       },
     })
@@ -75,8 +81,8 @@ export async function POST(
       data: {
         produtoId,
         tipo: 'saida',
-        quantidade,
-        observacao: `Comanda #${comandaId}`,
+        quantidade: Math.ceil(qtd),
+        observacao: `Comanda #${comandaId} - Qtd: ${qtd}`,
       },
     })
 

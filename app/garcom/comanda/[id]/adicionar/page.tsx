@@ -12,11 +12,13 @@ type Produto = {
   nome: string
   precoVenda: number
   estoqueAtual: number
+  unidadeMedida: string
 }
 
 type ItemCarrinho = {
   produto: Produto
   quantidade: number
+  peso?: number // Para produtos em kg
 }
 
 export default function AdicionarItensPage({ params }: { params: { id: string } }) {
@@ -26,6 +28,11 @@ export default function AdicionarItensPage({ params }: { params: { id: string } 
   const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
+  const [modalPeso, setModalPeso] = useState<{ show: boolean; produto: Produto | null }>({
+    show: false,
+    produto: null,
+  })
+  const [pesoInput, setPesoInput] = useState('')
 
   useEffect(() => {
     carregarProdutos()
@@ -38,6 +45,14 @@ export default function AdicionarItensPage({ params }: { params: { id: string } 
   }
 
   const adicionarAoCarrinho = (produto: Produto) => {
+    // Se produto é vendido por kg, abrir modal para input de peso
+    if (produto.unidadeMedida === 'kg') {
+      setModalPeso({ show: true, produto })
+      setPesoInput('')
+      return
+    }
+
+    // Para produtos de unidade, funciona como antes
     setCarrinho(prev => {
       const item = prev.find(i => i.produto.id === produto.id)
       if (item) {
@@ -51,15 +66,53 @@ export default function AdicionarItensPage({ params }: { params: { id: string } 
     })
   }
 
+  const adicionarPorPeso = () => {
+    if (!modalPeso.produto) return
+
+    const peso = parseFloat(pesoInput.replace(',', '.'))
+    
+    if (isNaN(peso) || peso <= 0) {
+      toast({
+        title: '⚠️ Peso inválido',
+        description: 'Digite um peso válido',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setCarrinho(prev => {
+      const item = prev.find(i => i.produto.id === modalPeso.produto!.id)
+      if (item) {
+        // Se já existe, adiciona ao peso
+        return prev.map(i =>
+          i.produto.id === modalPeso.produto!.id
+            ? { ...i, peso: (i.peso || 0) + peso }
+            : i
+        )
+      }
+      return [...prev, { produto: modalPeso.produto!, quantidade: 1, peso }]
+    })
+
+    setModalPeso({ show: false, produto: null })
+    setPesoInput('')
+  }
+
   const removerDoCarrinho = (produtoId: number) => {
     setCarrinho(prev => {
       const item = prev.find(i => i.produto.id === produtoId)
-      if (item && item.quantidade > 1) {
-        return prev.map(i =>
-          i.produto.id === produtoId
-            ? { ...i, quantidade: i.quantidade - 1 }
-            : i
-        )
+      if (item) {
+        // Se é produto por peso, remove completamente
+        if (item.produto.unidadeMedida === 'kg') {
+          return prev.filter(i => i.produto.id !== produtoId)
+        }
+        // Se é por unidade e tem mais de 1, decrementa
+        if (item.quantidade > 1) {
+          return prev.map(i =>
+            i.produto.id === produtoId
+              ? { ...i, quantidade: i.quantidade - 1 }
+              : i
+          )
+        }
       }
       return prev.filter(i => i.produto.id !== produtoId)
     })
@@ -79,12 +132,14 @@ export default function AdicionarItensPage({ params }: { params: { id: string } 
     try {
       // Adicionar cada item à comanda
       for (const item of carrinho) {
+        const quantidadeEnviar = item.produto.unidadeMedida === 'kg' ? item.peso : item.quantidade
+        
         const res = await fetch(`/api/comandas/${params.id}/itens`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             produtoId: item.produto.id,
-            quantidade: item.quantidade,
+            quantidade: quantidadeEnviar,
           }),
         })
 
@@ -112,10 +167,12 @@ export default function AdicionarItensPage({ params }: { params: { id: string } 
     p.nome.toLowerCase().includes(search.toLowerCase())
   )
 
-  const total = carrinho.reduce(
-    (sum, item) => sum + item.produto.precoVenda * item.quantidade,
-    0
-  )
+  const total = carrinho.reduce((sum, item) => {
+    if (item.produto.unidadeMedida === 'kg' && item.peso) {
+      return sum + item.produto.precoVenda * item.peso
+    }
+    return sum + item.produto.precoVenda * item.quantidade
+  }, 0)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-poker-green to-poker-green-dark pb-32">
@@ -159,9 +216,12 @@ export default function AdicionarItensPage({ params }: { params: { id: string } 
               >
                 <div className="flex-1">
                   <p className="font-medium">{produto.nome}</p>
-                  <p className="text-sm gold-text">R$ {produto.precoVenda.toFixed(2)}</p>
+                  <p className="text-sm gold-text">
+                    R$ {produto.precoVenda.toFixed(2)}
+                    {produto.unidadeMedida === 'kg' && '/kg'}
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    Estoque: {produto.estoqueAtual}
+                    Estoque: {produto.estoqueAtual} {produto.unidadeMedida}
                   </p>
                 </div>
 
@@ -171,9 +231,13 @@ export default function AdicionarItensPage({ params }: { params: { id: string } 
                       onClick={() => removerDoCarrinho(produto.id)}
                       className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center"
                     >
-                      <Minus className="w-4 h-4" />
+                      {produto.unidadeMedida === 'kg' ? <X className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                     </button>
-                    <span className="w-8 text-center font-bold">{itemCarrinho.quantidade}</span>
+                    <span className="w-12 text-center font-bold text-sm">
+                      {produto.unidadeMedida === 'kg' 
+                        ? `${itemCarrinho.peso?.toFixed(3)}kg` 
+                        : itemCarrinho.quantidade}
+                    </span>
                     <button
                       onClick={() => adicionarAoCarrinho(produto)}
                       className="w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center"
@@ -194,6 +258,62 @@ export default function AdicionarItensPage({ params }: { params: { id: string } 
           })}
         </div>
       </div>
+
+      {/* Modal de Peso */}
+      {modalPeso.show && modalPeso.produto && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="poker-card max-w-sm w-full p-6 space-y-4"
+          >
+            <div>
+              <h3 className="text-lg font-bold gold-text">{modalPeso.produto.nome}</h3>
+              <p className="text-sm text-muted-foreground">
+                R$ {modalPeso.produto.precoVenda.toFixed(2)}/kg
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">
+                Peso em quilogramas (kg)
+              </label>
+              <Input
+                type="text"
+                inputMode="decimal"
+                placeholder="Ex: 0.350"
+                value={pesoInput}
+                onChange={(e) => setPesoInput(e.target.value)}
+                className="text-lg text-center"
+                autoFocus
+              />
+              {pesoInput && !isNaN(parseFloat(pesoInput.replace(',', '.'))) && (
+                <p className="text-center mt-2 text-sm gold-text">
+                  Total: R$ {(parseFloat(pesoInput.replace(',', '.')) * modalPeso.produto.precoVenda).toFixed(2)}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setModalPeso({ show: false, produto: null })
+                  setPesoInput('')
+                }}
+                className="flex-1 py-3 rounded-lg bg-secondary/20 hover:bg-secondary/30 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={adicionarPorPeso}
+                className="flex-1 btn-poker-primary py-3 rounded-lg"
+              >
+                Adicionar
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Carrinho Fixo */}
       {carrinho.length > 0 && (

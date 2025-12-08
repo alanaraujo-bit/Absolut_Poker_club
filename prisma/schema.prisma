@@ -91,7 +91,7 @@ model ItemComanda {
   id              Int       @id @default(autoincrement())
   comandaId       Int       @map("comanda_id")
   produtoId       Int       @map("produto_id")
-  quantidade      Int
+  quantidade      Decimal   @db.Decimal(10, 3)
   precoUnitario   Decimal   @map("preco_unitario") @db.Decimal(10, 2)
   subtotal        Decimal   @db.Decimal(10, 2)
   dataHora        DateTime  @default(now()) @map("data_hora")
@@ -118,7 +118,7 @@ model ItemPedido {
   id              Int       @id @default(autoincrement())
   pedidoId        Int       @map("pedido_id")
   produtoId       Int       @map("produto_id")
-  quantidade      Int
+  quantidade      Decimal   @db.Decimal(10, 3)
   precoUnitario   Decimal   @map("preco_unitario") @db.Decimal(10, 2)
   subtotal        Decimal   @db.Decimal(10, 2)
   

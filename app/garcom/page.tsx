@@ -516,7 +516,10 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
                     <div>
                       <p className="font-medium">{item.produto.nome}</p>
                       <p className="text-sm text-muted-foreground">
-                        {item.quantidade}x R$ {item.precoUnitario.toFixed(2)}
+                        {item.produto.unidadeMedida === 'kg' 
+                          ? `${item.quantidade}kg × R$ ${item.precoUnitario.toFixed(2)}/kg`
+                          : `${item.quantidade}x R$ ${item.precoUnitario.toFixed(2)}`
+                        }
                       </p>
                     </div>
                     <p className="font-bold gold-text">R$ {item.subtotal.toFixed(2)}</p>
