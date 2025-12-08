@@ -28,3 +28,4 @@ interface RelatorioData {
 export function generateRelatorioPDF(data: RelatorioData): void
 export function generateEstoquePDF(produtos: any[]): void
 export function generatePedidoPDF(pedido: any, itens: any[]): void
+export function generateRelatorioClientePDF(data: any): void

@@ -497,3 +497,310 @@ export function generatePedidoPDF(pedido: any, itens: any[]) {
   const filename = `Pedido_${pedido.id}_ACATH.pdf`
   doc.save(filename)
 }
+
+interface RelatorioClienteData {
+  cliente: {
+    id: number
+    nome: string
+    telefone: string | null
+    cpf: string | null
+    saldo: number
+  }
+  periodo: string
+  estatisticas: {
+    totalComandas: number
+    totalGasto: number
+    ticketMedio: number
+    saldoAtual: number
+  }
+  produtosMaisComprados: Array<{
+    nome: string
+    quantidade: number
+    total: number
+  }>
+  comandasDetalhadas: Array<{
+    id: number
+    dataAbertura: string
+    dataFechamento: string | null
+    valorTotal: number
+    formaPagamento: string | null
+    itens: Array<{
+      produto: string
+      quantidade: number
+      precoUnitario: number
+      subtotal: number
+    }>
+  }>
+}
+
+export function generateRelatorioClientePDF(data: RelatorioClienteData) {
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.width
+  const pageHeight = doc.internal.pageSize.height
+  
+  const goldColor: [number, number, number] = [212, 175, 55]
+  const blackBg: [number, number, number] = [10, 10, 10]
+  
+  // Background
+  doc.setFillColor(...blackBg)
+  doc.rect(0, 0, pageWidth, pageHeight, 'F')
+  
+  // Header
+  doc.setFillColor(...goldColor)
+  doc.rect(0, 0, pageWidth, 40, 'F')
+  
+  doc.setTextColor(0, 0, 0)
+  doc.setFontSize(22)
+  doc.setFont('helvetica', 'bold')
+  doc.text('ABSOLUT POKER CLUB', pageWidth / 2, 15, { align: 'center' })
+  
+  doc.setFontSize(14)
+  doc.setFont('helvetica', 'normal')
+  doc.text('Relatório Individual', pageWidth / 2, 25, { align: 'center' })
+  
+  doc.setFontSize(10)
+  doc.text(`Período: ${getPeriodoLabel(data.periodo)}`, pageWidth / 2, 33, { align: 'center' })
+  
+  let yPos = 55
+  
+  // Informações do Cliente
+  doc.setTextColor(...goldColor)
+  doc.setFontSize(14)
+  doc.setFont('helvetica', 'bold')
+  doc.text('DADOS DO JOGADOR', 15, yPos)
+  
+  yPos += 8
+  doc.setDrawColor(...goldColor)
+  doc.setLineWidth(0.5)
+  doc.line(15, yPos, pageWidth - 15, yPos)
+  
+  yPos += 8
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(11)
+  doc.setFont('helvetica', 'normal')
+  
+  doc.text(`Nome: ${data.cliente.nome}`, 20, yPos)
+  yPos += 7
+  
+  if (data.cliente.telefone) {
+    doc.text(`Telefone: ${data.cliente.telefone}`, 20, yPos)
+    yPos += 7
+  }
+  
+  if (data.cliente.cpf) {
+    doc.text(`CPF: ${data.cliente.cpf}`, 20, yPos)
+    yPos += 7
+  }
+  
+  const saldoColor: [number, number, number] = data.cliente.saldo < 0 ? [255, 140, 0] : [0, 200, 0]
+  doc.setTextColor(...saldoColor)
+  doc.setFont('helvetica', 'bold')
+  doc.text(`Saldo Atual: ${formatCurrency(Math.abs(data.cliente.saldo))}${data.cliente.saldo < 0 ? ' (deve)' : ''}`, 20, yPos)
+  
+  yPos += 15
+  
+  // Estatísticas
+  doc.setTextColor(...goldColor)
+  doc.setFontSize(14)
+  doc.setFont('helvetica', 'bold')
+  doc.text('ESTATÍSTICAS', 15, yPos)
+  
+  yPos += 8
+  doc.setDrawColor(...goldColor)
+  doc.line(15, yPos, pageWidth - 15, yPos)
+  
+  yPos += 10
+  
+  const stats = [
+    ['Total de Comandas', data.estatisticas.totalComandas.toString()],
+    ['Total Gasto', formatCurrency(data.estatisticas.totalGasto)],
+    ['Ticket Médio', formatCurrency(data.estatisticas.ticketMedio)]
+  ]
+  
+  autoTable(doc, {
+    startY: yPos,
+    head: [],
+    body: stats,
+    theme: 'plain',
+    styles: {
+      textColor: [255, 255, 255],
+      fontSize: 11
+    },
+    columnStyles: {
+      0: { halign: 'left', cellWidth: 90, fontStyle: 'bold' },
+      1: { halign: 'right', cellWidth: 90, textColor: goldColor }
+    },
+    margin: { left: 20, right: 20 }
+  })
+  
+  yPos = (doc as any).lastAutoTable.finalY + 15
+  
+  // Produtos Favoritos
+  if (data.produtosMaisComprados.length > 0) {
+    doc.setTextColor(...goldColor)
+    doc.setFontSize(14)
+    doc.setFont('helvetica', 'bold')
+    doc.text('PRODUTOS FAVORITOS', 15, yPos)
+    
+    yPos += 8
+    doc.setDrawColor(...goldColor)
+    doc.line(15, yPos, pageWidth - 15, yPos)
+    
+    yPos += 5
+    
+    const produtosData = data.produtosMaisComprados.slice(0, 5).map((p, i) => [
+      `${i + 1}º`,
+      p.nome,
+      p.quantidade.toString(),
+      formatCurrency(p.total)
+    ])
+    
+    autoTable(doc, {
+      startY: yPos,
+      head: [['#', 'Produto', 'Qtd', 'Total']],
+      body: produtosData,
+      theme: 'plain',
+      headStyles: {
+        fillColor: [30, 30, 30],
+        textColor: goldColor,
+        fontStyle: 'bold',
+        fontSize: 10
+      },
+      bodyStyles: {
+        fillColor: [20, 20, 20],
+        textColor: [255, 255, 255],
+        fontSize: 9
+      },
+      alternateRowStyles: {
+        fillColor: [15, 15, 15]
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 15 },
+        1: { halign: 'left', cellWidth: 90 },
+        2: { halign: 'center', cellWidth: 30 },
+        3: { halign: 'right', cellWidth: 45 }
+      },
+      margin: { left: 15, right: 15 }
+    })
+    
+    yPos = (doc as any).lastAutoTable.finalY + 15
+  }
+  
+  // Nova página para comandas detalhadas
+  if (data.comandasDetalhadas.length > 0) {
+    doc.addPage()
+    
+    // Background da nova página
+    doc.setFillColor(...blackBg)
+    doc.rect(0, 0, pageWidth, pageHeight, 'F')
+    
+    yPos = 20
+    
+    doc.setTextColor(...goldColor)
+    doc.setFontSize(14)
+    doc.setFont('helvetica', 'bold')
+    doc.text('HISTÓRICO DE COMANDAS', 15, yPos)
+    
+    yPos += 8
+    doc.setDrawColor(...goldColor)
+    doc.line(15, yPos, pageWidth - 15, yPos)
+    
+    yPos += 10
+    
+    data.comandasDetalhadas.forEach((comanda, index) => {
+      if (yPos > pageHeight - 40) {
+        doc.addPage()
+        doc.setFillColor(...blackBg)
+        doc.rect(0, 0, pageWidth, pageHeight, 'F')
+        yPos = 20
+      }
+      
+      doc.setTextColor(...goldColor)
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.text(`Comanda #${comanda.id}`, 20, yPos)
+      
+      doc.setTextColor(200, 200, 200)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      const dataFechamento = comanda.dataFechamento ? new Date(comanda.dataFechamento).toLocaleDateString('pt-BR') : 'Em aberto'
+      doc.text(`${dataFechamento}${comanda.formaPagamento ? ' • ' + comanda.formaPagamento : ''}`, 20, yPos + 5)
+      
+      yPos += 10
+      
+      const itensData = comanda.itens.map(item => [
+        item.produto,
+        item.quantidade.toString(),
+        formatCurrency(item.precoUnitario),
+        formatCurrency(item.subtotal)
+      ])
+      
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Produto', 'Qtd', 'Preço', 'Subtotal']],
+        body: itensData,
+        theme: 'plain',
+        headStyles: {
+          fillColor: [30, 30, 30],
+          textColor: [180, 180, 180],
+          fontSize: 8
+        },
+        bodyStyles: {
+          fillColor: [15, 15, 15],
+          textColor: [220, 220, 220],
+          fontSize: 8
+        },
+        columnStyles: {
+          0: { halign: 'left', cellWidth: 85 },
+          1: { halign: 'center', cellWidth: 25 },
+          2: { halign: 'right', cellWidth: 35 },
+          3: { halign: 'right', cellWidth: 35 }
+        },
+        margin: { left: 20, right: 20 }
+      })
+      
+      yPos = (doc as any).lastAutoTable.finalY + 5
+      
+      // Total da comanda
+      doc.setFillColor(30, 30, 30)
+      doc.roundedRect(pageWidth - 90, yPos, 70, 10, 2, 2, 'F')
+      
+      doc.setTextColor(...goldColor)
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Total:', pageWidth - 85, yPos + 7)
+      doc.text(formatCurrency(comanda.valorTotal), pageWidth - 25, yPos + 7, { align: 'right' })
+      
+      yPos += 18
+    })
+  }
+  
+  // Footer em todas as páginas
+  const totalPages = doc.getNumberOfPages()
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i)
+    doc.setDrawColor(...goldColor)
+    doc.setLineWidth(0.5)
+    doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15)
+    
+    doc.setFontSize(7)
+    doc.setTextColor(150, 150, 150)
+    doc.setFont('helvetica', 'normal')
+    doc.text('Absolut Poker Club - ACATH', pageWidth / 2, pageHeight - 8, { align: 'center' })
+    doc.text(`Página ${i} de ${totalPages}`, pageWidth - 20, pageHeight - 8, { align: 'right' })
+  }
+  
+  const filename = `Relatorio_${data.cliente.nome.replace(/\s+/g, '_')}_${data.periodo}_ACATH.pdf`
+  doc.save(filename)
+}
+
+function getPeriodoLabel(periodo: string): string {
+  switch (periodo) {
+    case 'hoje': return 'Hoje'
+    case 'semana': return 'Última Semana'
+    case 'mes': return 'Último Mês'
+    case 'todos': return 'Todos os Períodos'
+    default: return periodo
+  }
+}
+
