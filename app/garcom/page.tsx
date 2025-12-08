@@ -46,20 +46,26 @@ export default function GarcomPage() {
   const { toast } = useToast()
   
   const [comandasAbertas, setComandasAbertas] = useState<Comanda[]>([])
+  const [comandasFechadas, setComandasFechadas] = useState<Comanda[]>([])
   const [comandaSelecionada, setComandaSelecionada] = useState<Comanda | null>(null)
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState<'comandas' | 'nova-comanda' | 'detalhes'>('comandas')
+  const [mostrarFechadas, setMostrarFechadas] = useState(false)
 
   useEffect(() => {
     carregarComandasAbertas()
+    carregarComandasFechadas()
     
     // Atualização automática a cada 3 segundos
     const interval = setInterval(() => {
       carregarComandasAbertas()
+      if (mostrarFechadas) {
+        carregarComandasFechadas()
+      }
     }, 3000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [mostrarFechadas])
 
   const carregarComandasAbertas = async () => {
     try {
@@ -68,6 +74,33 @@ export default function GarcomPage() {
       setComandasAbertas(data)
     } catch (error) {
       console.error('Erro ao carregar comandas:', error)
+    }
+  }
+
+  const carregarComandasFechadas = async () => {
+    try {
+      const hoje = new Date()
+      hoje.setHours(0, 0, 0, 0)
+      
+      const res = await fetch('/api/comandas?status=fechada', {
+        cache: 'no-store',
+      })
+      const data = await res.json()
+      
+      // Filtrar apenas comandas de hoje
+      const comandasHoje = data.filter((c: Comanda) => {
+        const dataFechamento = new Date(c.dataAbertura)
+        return dataFechamento >= hoje
+      })
+      
+      // Ordenar por mais recente
+      comandasHoje.sort((a: Comanda, b: Comanda) => 
+        new Date(b.dataAbertura).getTime() - new Date(a.dataAbertura).getTime()
+      )
+      
+      setComandasFechadas(comandasHoje.slice(0, 10)) // Últimas 10
+    } catch (error) {
+      console.error('Erro ao carregar comandas fechadas:', error)
     }
   }
 
@@ -197,6 +230,74 @@ export default function GarcomPage() {
               ))}
             </div>
           )}
+
+          {/* Vendas Recentes */}
+          <div className="mt-8">
+            <button
+              onClick={() => {
+                setMostrarFechadas(!mostrarFechadas)
+                if (!mostrarFechadas) {
+                  carregarComandasFechadas()
+                }
+              }}
+              className="w-full poker-card p-4 flex items-center justify-between"
+            >
+              <h3 className="font-bold text-lg gold-text">📊 Vendas Recentes (Hoje)</h3>
+              <motion.div
+                animate={{ rotate: mostrarFechadas ? 90 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChevronRight className="w-6 h-6 text-primary" />
+              </motion.div>
+            </button>
+
+            {mostrarFechadas && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-3 space-y-3"
+              >
+                {comandasFechadas.length === 0 ? (
+                  <div className="poker-card p-8 text-center">
+                    <Receipt className="w-12 h-12 mx-auto text-muted-foreground/30 mb-2" />
+                    <p className="text-muted-foreground text-sm">
+                      Nenhuma venda hoje
+                    </p>
+                  </div>
+                ) : (
+                  comandasFechadas.map((comanda) => (
+                    <div
+                      key={comanda.id}
+                      className="poker-card p-4 opacity-75"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h3 className="font-bold">{comanda.cliente.nome}</h3>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {formatarData(comanda.dataAbertura)}
+                          </p>
+                        </div>
+                        <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold">
+                          ✓ Fechada
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-primary/20">
+                        <span className="text-sm text-muted-foreground">
+                          {comanda.itens?.length || 0} itens
+                        </span>
+                        <span className="text-lg font-bold text-green-400">
+                          R$ {comanda.valorTotal.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </motion.div>
+            )}
+          </div>
         </div>
       )}
 

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Desabilita cache para esta rota
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function GET() {
   try {
     const clientes = await prisma.cliente.findMany({
@@ -14,7 +18,11 @@ export async function GET() {
       saldo: Number(c.saldo)
     }))
     
-    return NextResponse.json(clientesFormatados)
+    return NextResponse.json(clientesFormatados, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    })
   } catch (error) {
     console.error('Erro ao buscar clientes:', error)
     return NextResponse.json({ error: 'Erro ao buscar clientes' }, { status: 500 })
