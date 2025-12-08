@@ -268,7 +268,7 @@ export default function ClientesPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="cpf" className="text-sm">CPF</Label>
+                        <Label htmlFor="cpf" className="text-sm">CPF (Opcional)</Label>
                         <Input
                           id="cpf"
                           value={novoCliente.cpf}
@@ -333,7 +333,7 @@ export default function ClientesPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="edit-cpf" className="text-sm">CPF</Label>
+                        <Label htmlFor="edit-cpf" className="text-sm">CPF (Opcional)</Label>
                         <Input
                           id="edit-cpf"
                           value={editando.cpf || ''}
