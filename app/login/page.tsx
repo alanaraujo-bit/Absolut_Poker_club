@@ -462,12 +462,6 @@ export default function LoginPage() {
                       'Entrar'
                     )}
                   </motion.button>
-
-                  <div className="pt-3 border-t border-poker-gold/10">
-                    <p className="text-[10px] text-poker-gold/30 text-center">
-                      Padrão: <span className="text-poker-gold/50 font-mono">admin / admin123</span>
-                    </p>
-                  </div>
                 </motion.form>
               )}
             </AnimatePresence>
@@ -490,7 +484,7 @@ export default function LoginPage() {
           transition={{ delay: 0.3 }}
           className="text-center mt-4 text-poker-gold/20 text-[10px]"
         >
-          © 2024 Absolute Poker Club
+          © 2025 Absolute Poker Club
         </motion.p>
       </motion.div>
 
