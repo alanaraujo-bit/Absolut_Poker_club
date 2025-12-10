@@ -6,16 +6,27 @@ export const revalidate = 0
 
 export async function GET() {
   try {
-    const inicioMes = new Date()
-    inicioMes.setDate(1)
-    inicioMes.setHours(0, 0, 0, 0)
+    // Usar timezone UTC-3 (horário de Brasília)
+    const agora = new Date()
+    const offsetBrasilia = -3 * 60
+    const offsetLocal = agora.getTimezoneOffset()
+    const diffMinutos = offsetBrasilia - offsetLocal
+    
+    const agoraBrasilia = new Date(agora.getTime() + diffMinutos * 60 * 1000)
+    
+    // Início do mês em Brasília
+    const inicioMes = new Date(Date.UTC(
+      agoraBrasilia.getFullYear(),
+      agoraBrasilia.getMonth(),
+      1,
+      3, 0, 0
+    ))
 
-    // Buscar itens de comandas fechadas do mês
+    // Buscar itens de TODAS as comandas abertas no mês (abertas e fechadas)
     const itens = await prisma.itemComanda.findMany({
       where: {
         comanda: {
-          status: 'fechada',
-          dataFechamento: {
+          dataAbertura: {
             gte: inicioMes,
           },
         },
@@ -30,23 +41,39 @@ export async function GET() {
 
     itens.forEach((item) => {
       const produtoId = item.produtoId
+      const qtd = Number(item.quantidade)
+      const subtotal = Number(item.subtotal)
+      
       if (produtosMap.has(produtoId)) {
         const existing = produtosMap.get(produtoId)
-        existing.quantidade += item.quantidade
-        existing.total += Number(item.subtotal)
+        existing.quantidade += qtd
+        existing.total += subtotal
       } else {
         produtosMap.set(produtoId, {
           nome: item.produto.nome,
-          quantidade: item.quantidade,
-          total: Number(item.subtotal),
+          quantidade: qtd,
+          total: subtotal,
         })
       }
     })
 
-    // Converter para array e ordenar
+    // Converter para array e ordenar por valor total vendido
     const topProdutos = Array.from(produtosMap.values())
       .sort((a, b) => b.total - a.total)
       .slice(0, 10)
+
+    // Log para debug
+    console.log('Top Produtos:', {
+      dataHoraBrasilia: agoraBrasilia.toLocaleString('pt-BR'),
+      inicioMes: inicioMes.toISOString(),
+      totalItens: itens.length,
+      produtosUnicos: produtosMap.size,
+      top5: topProdutos.slice(0, 5).map(p => ({ 
+        nome: p.nome, 
+        quantidade: p.quantidade,
+        total: p.total 
+      })),
+    })
 
     return NextResponse.json(topProdutos, {
       headers: {
