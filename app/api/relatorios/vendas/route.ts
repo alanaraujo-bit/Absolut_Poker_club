@@ -7,79 +7,61 @@ export const revalidate = 0
 
 export async function GET() {
   try {
-    const hoje = new Date()
-    hoje.setHours(0, 0, 0, 0)
+    // Usar timezone local para calcular o início do dia corretamente
+    const agoraLocal = new Date()
+    const hoje = new Date(agoraLocal.getFullYear(), agoraLocal.getMonth(), agoraLocal.getDate())
+    const amanha = new Date(hoje)
+    amanha.setDate(amanha.getDate() + 1)
 
     const inicioSemana = new Date(hoje)
     inicioSemana.setDate(hoje.getDate() - hoje.getDay())
+    const fimSemana = new Date(inicioSemana)
+    fimSemana.setDate(fimSemana.getDate() + 7)
 
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+    const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1)
 
-    // Vendas de hoje (comandas fechadas)
+    // Vendas de hoje - buscar por dataAbertura (todas as comandas abertas hoje)
     const comandasHoje = await prisma.comanda.findMany({
       where: {
-        status: 'fechada',
-        dataFechamento: { gte: hoje },
-      },
-    })
-
-    const comandasAbertasHoje = await prisma.comanda.findMany({
-      where: {
-        status: 'aberta',
-        dataAbertura: { gte: hoje },
+        dataAbertura: {
+          gte: hoje,
+          lt: amanha,
+        },
       },
     })
 
     const vendasHoje = comandasHoje.reduce(
       (sum, comanda) => sum + Number(comanda.valorTotal),
       0
-    ) + comandasAbertasHoje.reduce(
-      (sum, comanda) => sum + Number(comanda.valorTotal),
-      0
     )
 
-    // Vendas da semana
+    // Vendas da semana - todas as comandas abertas esta semana
     const comandasSemana = await prisma.comanda.findMany({
       where: {
-        status: 'fechada',
-        dataFechamento: { gte: inicioSemana },
-      },
-    })
-
-    const comandasAbertasSemana = await prisma.comanda.findMany({
-      where: {
-        status: 'aberta',
-        dataAbertura: { gte: inicioSemana },
+        dataAbertura: {
+          gte: inicioSemana,
+          lt: fimSemana,
+        },
       },
     })
 
     const vendasSemana = comandasSemana.reduce(
       (sum, comanda) => sum + Number(comanda.valorTotal),
       0
-    ) + comandasAbertasSemana.reduce(
-      (sum, comanda) => sum + Number(comanda.valorTotal),
-      0
     )
 
-    // Vendas do mês
+    // Vendas do mês - todas as comandas abertas este mês
     const comandasMes = await prisma.comanda.findMany({
       where: {
-        status: 'fechada',
-        dataFechamento: { gte: inicioMes },
-      },
-    })
-
-    const comandasAbertasMes = await prisma.comanda.findMany({
-      where: {
-        status: 'aberta',
-        dataAbertura: { gte: inicioMes },
+        dataAbertura: {
+          gte: inicioMes,
+          lt: fimMes,
+        },
       },
     })
 
     const vendasMes = comandasMes.reduce(
-      (sum, comanda) => sum + Number(comanda.valorTotal),
-      0
-    ) + comandasAbertasMes.reduce(
       (sum, comanda) => sum + Number(comanda.valorTotal),
       0
     )

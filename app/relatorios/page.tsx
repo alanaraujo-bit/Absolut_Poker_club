@@ -201,31 +201,40 @@ export default function RelatoriosPage() {
     c.nome.toLowerCase().includes(buscaCliente.toLowerCase())
   )
 
-  function handleExportPDF() {
-    // Preparar dados para o PDF
-    const pdfData = {
-      periodo: `${formatDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))} - ${formatDate(new Date())}`,
-      vendas: [
-        { data: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), total: vendas.hoje, pedidos: 5 },
-        { data: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), total: vendas.semana / 7, pedidos: 8 },
-        { data: new Date().toISOString(), total: vendas.hoje, pedidos: pedidosRecentes.length },
-      ],
-      topProdutos: topProdutos.map(p => ({
-        nome: p.nome,
-        totalVendido: p.total,
-        quantidade: p.quantidade
-      })),
-      pedidosRecentes: pedidosRecentes.map(p => ({
-        id: p.id,
-        total: p.valorTotal,
-        createdAt: p.dataFechamento,
-        cliente: p.cliente.nome
-      })),
-      totalGeral: vendas.mes,
-      totalPedidos: pedidosRecentes.length
+  async function handleExportPDF() {
+    try {
+      // Buscar dados reais de vendas por dia dos últimos 7 dias
+      const response = await fetch('/api/relatorios/vendas-por-dia', { cache: 'no-store' })
+      const vendasPorDia = response.ok ? await response.json() : []
+      
+      const pdfData = {
+        periodo: `Últimos 7 dias - ${formatDate(new Date())}`,
+        vendas: vendasPorDia.length > 0 ? vendasPorDia : [
+          { data: new Date().toISOString(), total: vendas.hoje, pedidos: pedidosRecentes.filter(p => {
+            const dataP = new Date(p.dataFechamento)
+            const hoje = new Date()
+            return dataP.getDate() === hoje.getDate() && dataP.getMonth() === hoje.getMonth()
+          }).length }
+        ],
+        topProdutos: topProdutos.map(p => ({
+          nome: p.nome,
+          totalVendido: p.total,
+          quantidade: p.quantidade
+        })),
+        pedidosRecentes: pedidosRecentes.slice(0, 10).map(p => ({
+          id: p.id,
+          total: p.valorTotal,
+          createdAt: p.dataFechamento,
+          cliente: p.cliente.nome
+        })),
+        totalGeral: vendas.hoje,
+        totalPedidos: pedidosRecentes.length
+      }
+      
+      generateRelatorioPDF(pdfData)
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error)
     }
-    
-    generateRelatorioPDF(pdfData)
   }
 
   return (
