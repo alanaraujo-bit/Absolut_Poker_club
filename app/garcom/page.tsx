@@ -588,6 +588,48 @@ function NovaComandaView({ onVoltar, onAbrir, loading }: any) {
   )
 }
 
+function ItemComandaCard({ item, comandaFechada, onRemover }: any) {
+  const [removendo, setRemovendo] = useState(false)
+
+  const handleRemover = async () => {
+    setRemovendo(true)
+    try {
+      await onRemover()
+    } finally {
+      setRemovendo(false)
+    }
+  }
+
+  return (
+    <div className="poker-card p-3">
+      <div className="flex justify-between items-start gap-2">
+        <div className="flex-1">
+          <p className="font-medium">{item.produto.nome}</p>
+          <p className="text-sm text-muted-foreground">
+            {item.produto.unidadeMedida === 'kg' 
+              ? `${item.quantidade}kg × R$ ${item.precoUnitario.toFixed(2)}/kg`
+              : `${item.quantidade}x R$ ${item.precoUnitario.toFixed(2)}`
+            }
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <p className="font-bold gold-text">R$ {item.subtotal.toFixed(2)}</p>
+          {!comandaFechada && (
+            <button
+              onClick={handleRemover}
+              disabled={removendo}
+              className="p-2 rounded-lg hover:bg-red-500/20 text-red-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Remover item"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function DetalhesComandaView({ comanda, onVoltar }: any) {
   const router = useRouter()
   const { toast } = useToast()
@@ -747,20 +789,41 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
             <div key={data} className="space-y-2">
               <h3 className="font-semibold gold-text">{data}</h3>
               {itens.map((item: any) => (
-                <div key={item.id} className="poker-card p-3">
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium">{item.produto.nome}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {item.produto.unidadeMedida === 'kg' 
-                          ? `${item.quantidade}kg × R$ ${item.precoUnitario.toFixed(2)}/kg`
-                          : `${item.quantidade}x R$ ${item.precoUnitario.toFixed(2)}`
+                <ItemComandaCard 
+                  key={item.id} 
+                  item={item} 
+                  comandaFechada={comandaFechada}
+                  onRemover={async () => {
+                    if (confirm(`Deseja remover ${item.produto.nome} da comanda?`)) {
+                      try {
+                        const res = await fetch(`/api/comandas/${comanda.id}/itens/${item.id}`, {
+                          method: 'DELETE',
+                        })
+
+                        if (!res.ok) {
+                          const error = await res.json()
+                          throw new Error(error.error)
                         }
-                      </p>
-                    </div>
-                    <p className="font-bold gold-text">R$ {item.subtotal.toFixed(2)}</p>
-                  </div>
-                </div>
+
+                        toast({
+                          title: '✅ Item removido',
+                          description: `${item.produto.nome} foi removido da comanda`,
+                        })
+
+                        // Recarregar detalhes da comanda
+                        const resComanda = await fetch(`/api/comandas/${comanda.id}`)
+                        const dataComanda = await resComanda.json()
+                        window.location.reload() // Força reload para atualizar a view
+                      } catch (error: any) {
+                        toast({
+                          title: '❌ Erro',
+                          description: error.message,
+                          variant: 'destructive',
+                        })
+                      }
+                    }
+                  }}
+                />
               ))}
             </div>
           ))}
