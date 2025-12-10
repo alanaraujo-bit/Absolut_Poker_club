@@ -174,11 +174,17 @@ export function generateRelatorioPDF(data: RelatorioData) {
   autoTable(doc, {
     startY: yPos,
     head: [['Data', 'Pedidos', 'Faturamento']],
-    body: data.vendas.map(venda => [
-      new Date(venda.data).toLocaleDateString('pt-BR'),
-      venda.pedidos.toString(),
-      formatCurrency(venda.total)
-    ]),
+    body: data.vendas.map(venda => {
+      // Criar data sem conversão de timezone
+      const dataISO = venda.data.split('T')[0]
+      const [ano, mes, dia] = dataISO.split('-')
+      const dataFormatada = `${dia}/${mes}/${ano}`
+      return [
+        dataFormatada,
+        venda.pedidos.toString(),
+        formatCurrency(venda.total)
+      ]
+    }),
     theme: 'grid',
     headStyles: {
       fillColor: goldColor,
@@ -223,11 +229,17 @@ export function generateRelatorioPDF(data: RelatorioData) {
   autoTable(doc, {
     startY: yPos,
     head: [['Pedido #', 'Data/Hora', 'Valor Total']],
-    body: data.pedidosRecentes.map(pedido => [
-      `#${pedido.id}`,
-      new Date(pedido.createdAt).toLocaleString('pt-BR'),
-      formatCurrency(pedido.total)
-    ]),
+    body: data.pedidosRecentes.map(pedido => {
+      // Criar data ajustada para Brasília (UTC-3)
+      const dataUTC = new Date(pedido.createdAt)
+      dataUTC.setHours(dataUTC.getHours() - 3)
+      const dataFormatada = dataUTC.toLocaleString('pt-BR', { timeZone: 'UTC' })
+      return [
+        `#${pedido.id}`,
+        dataFormatada,
+        formatCurrency(pedido.total)
+      ]
+    }),
     theme: 'grid',
     headStyles: {
       fillColor: goldColor,
@@ -723,7 +735,12 @@ export function generateRelatorioClientePDF(data: RelatorioClienteData) {
       doc.setTextColor(200, 200, 200)
       doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
-      const dataFechamento = comanda.dataFechamento ? new Date(comanda.dataFechamento).toLocaleDateString('pt-BR') : 'Em aberto'
+      let dataFechamento = 'Em aberto'
+      if (comanda.dataFechamento) {
+        const dataISO = comanda.dataFechamento.split('T')[0]
+        const [ano, mes, dia] = dataISO.split('-')
+        dataFechamento = `${dia}/${mes}/${ano}`
+      }
       doc.text(`${dataFechamento}${comanda.formaPagamento ? ' • ' + comanda.formaPagamento : ''}`, 20, yPos + 5)
       
       yPos += 10

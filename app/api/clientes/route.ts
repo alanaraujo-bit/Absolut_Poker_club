@@ -9,14 +9,43 @@ export async function GET() {
   try {
     const clientes = await prisma.cliente.findMany({
       where: { ativo: true },
-      orderBy: { nome: 'asc' }
+      include: {
+        _count: {
+          select: { comandas: true }
+        },
+        comandas: {
+          take: 1,
+          orderBy: { dataAbertura: 'desc' },
+          select: { dataAbertura: true }
+        }
+      }
     })
     
-    // Converter Decimal para number
-    const clientesFormatados = clientes.map(c => ({
-      ...c,
-      saldo: Number(c.saldo)
-    }))
+    // Converter Decimal para number e ordenar
+    const clientesFormatados = clientes
+      .map(c => ({
+        ...c,
+        saldo: Number(c.saldo),
+        ultimaComanda: c.comandas[0]?.dataAbertura || null
+      }))
+      .sort((a, b) => {
+        // Primeiro: clientes com comandas
+        const aTemComandas = a._count.comandas > 0
+        const bTemComandas = b._count.comandas > 0
+        
+        if (aTemComandas && !bTemComandas) return -1
+        if (!aTemComandas && bTemComandas) return 1
+        
+        // Segundo: entre os que têm comandas, ordenar por mais recente
+        if (aTemComandas && bTemComandas) {
+          if (a.ultimaComanda && b.ultimaComanda) {
+            return new Date(b.ultimaComanda).getTime() - new Date(a.ultimaComanda).getTime()
+          }
+        }
+        
+        // Terceiro: ordem alfabética
+        return a.nome.localeCompare(b.nome)
+      })
     
     return NextResponse.json(clientesFormatados, {
       headers: {
