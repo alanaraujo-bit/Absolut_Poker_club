@@ -635,6 +635,8 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
   const { toast } = useToast()
   const [excluindo, setExcluindo] = useState(false)
   const [garcomNome, setGarcomNome] = useState<string | null>(null)
+  const [pagamentosParciais, setPagamentosParciais] = useState<any[]>([])
+  const [mostrarPagamentos, setMostrarPagamentos] = useState(false)
   const comandaFechada = comanda.status === 'fechada'
 
   useEffect(() => {
@@ -644,7 +646,53 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
         .then(data => setGarcomNome(data.nome))
         .catch(() => setGarcomNome('Não identificado'))
     }
-  }, [comanda.garcomId])
+    
+    // Carregar pagamentos parciais
+    carregarPagamentos()
+  }, [comanda.garcomId, comanda.id])
+
+  const carregarPagamentos = async () => {
+    try {
+      const res = await fetch(`/api/comandas/${comanda.id}/pagamentos`)
+      const data = await res.json()
+      setPagamentosParciais(data || [])
+    } catch (error) {
+      console.error('Erro ao carregar pagamentos:', error)
+    }
+  }
+
+  const estornarPagamento = async (pagamentoId: number) => {
+    if (!confirm('Deseja realmente estornar este pagamento? Os itens voltarão para a comanda.')) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/comandas/${comanda.id}/pagamentos/${pagamentoId}/estornar`, {
+        method: 'POST',
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error)
+      }
+
+      const resultado = await res.json()
+
+      toast({
+        title: '✅ Pagamento estornado',
+        description: resultado.mensagem,
+      })
+
+      // Recarregar a página para atualizar os dados
+      window.location.reload()
+    } catch (error: any) {
+      toast({
+        title: '❌ Erro',
+        description: error.message,
+        variant: 'destructive',
+      })
+    }
+  }
 
   const formatarData = (data: string) => {
     return new Date(data).toLocaleDateString('pt-BR', {
@@ -784,6 +832,82 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
           )}
         </div>
 
+        {/* Pagamentos Parciais */}
+        {pagamentosParciais.length > 0 && (
+          <div className="glass-poker rounded-xl p-4">
+            <button
+              onClick={() => setMostrarPagamentos(!mostrarPagamentos)}
+              className="w-full flex items-center justify-between"
+            >
+              <h3 className="font-bold gold-text flex items-center gap-2">
+                💰 Pagamentos Parciais ({pagamentosParciais.filter(p => !p.estornado).length})
+              </h3>
+              <motion.div
+                animate={{ rotate: mostrarPagamentos ? 90 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChevronRight className="w-5 h-5 text-primary" />
+              </motion.div>
+            </button>
+
+            {mostrarPagamentos && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mt-4 space-y-3"
+              >
+                {pagamentosParciais.map((pagamento) => (
+                  <div
+                    key={pagamento.id}
+                    className={`poker-card p-3 ${
+                      pagamento.estornado ? 'opacity-50 border-2 border-red-500/30' : ''
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-bold text-green-400">
+                            R$ {pagamento.valor.toFixed(2)}
+                          </p>
+                          {pagamento.estornado && (
+                            <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold">
+                              ESTORNADO
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {formatarFormaPagamento(pagamento.formaPagamento)} •{' '}
+                          {formatarData(pagamento.dataPagamento)}
+                        </p>
+                        <div className="mt-2 text-xs">
+                          {pagamento.itens.map((item: any, idx: number) => (
+                            <div key={idx} className="text-muted-foreground">
+                              • {item.produtoNome} ({item.quantidade}x)
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {!pagamento.estornado && !comandaFechada && (
+                        <button
+                          onClick={() => estornarPagamento(pagamento.id)}
+                          className="ml-2 px-3 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-semibold transition-all"
+                        >
+                          Estornar
+                        </button>
+                      )}
+                    </div>
+                    {pagamento.estornado && pagamento.dataEstorno && (
+                      <p className="text-xs text-red-400 mt-2">
+                        Estornado em: {formatarData(pagamento.dataEstorno)}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+        )}
+
         <div className="space-y-4">
           {Object.entries(grupos).map(([data, itens]: any) => (
             <div key={data} className="space-y-2">
@@ -839,13 +963,22 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
             <Plus className="w-5 h-5" />
             Adicionar Itens
           </button>
-          <button
-            onClick={() => router.push(`/garcom/comanda/${comanda.id}/fechar`)}
-            className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
-          >
-            <Receipt className="w-5 h-5" />
-            Fechar Comanda
-          </button>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => router.push(`/garcom/comanda/${comanda.id}/pagar-parcial`)}
+              className="w-full bg-amber-600 hover:bg-amber-700 text-white h-12 text-lg font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+              <Receipt className="w-5 h-5" />
+              Pagar Parcial
+            </button>
+            <button
+              onClick={() => router.push(`/garcom/comanda/${comanda.id}/fechar`)}
+              className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+              <Receipt className="w-5 h-5" />
+              Fechar Tudo
+            </button>
+          </div>
           <button
             onClick={excluirComanda}
             disabled={excluindo}

@@ -83,8 +83,25 @@ model Comanda {
   
   cliente         Cliente   @relation(fields: [clienteId], references: [id])
   itens           ItemComanda[]
+  pagamentosParciais PagamentoParcial[]
 
   @@map("comandas")
+}
+
+model PagamentoParcial {
+  id              Int       @id @default(autoincrement())
+  comandaId       Int       @map("comanda_id")
+  valor           Decimal   @db.Decimal(10, 2)
+  formaPagamento  String    @map("forma_pagamento")
+  dataPagamento   DateTime  @default(now()) @map("data_pagamento")
+  estornado       Boolean   @default(false)
+  dataEstorno     DateTime? @map("data_estorno")
+  itensJson       String    @map("itens_json") @db.Text // JSON com os itens pagos
+  observacao      String?
+  
+  comanda         Comanda   @relation(fields: [comandaId], references: [id])
+
+  @@map("pagamentos_parciais")
 }
 
 model ItemComanda {
