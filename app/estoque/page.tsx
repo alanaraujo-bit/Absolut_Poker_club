@@ -92,7 +92,7 @@ export default function EstoquePage() {
       })
 
       if (res.ok) {
-        toast({Umm. What am I? London. 
+        toast({
           title: "Produto cadastrado!",
           description: `${novoProduto.nome} foi adicionado ao estoque`,
         })
