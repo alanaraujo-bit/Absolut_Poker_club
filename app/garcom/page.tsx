@@ -51,6 +51,7 @@ export default function GarcomPage() {
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState<'comandas' | 'nova-comanda' | 'detalhes'>('comandas')
   const [mostrarFechadas, setMostrarFechadas] = useState(false)
+  const [buscaComanda, setBuscaComanda] = useState('')
 
   useEffect(() => {
     carregarComandasAbertas()
@@ -177,7 +178,12 @@ export default function GarcomPage() {
       {view === 'comandas' && (
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold gold-text">Comandas Abertas</h2>
+            <div>
+              <h2 className="text-lg font-bold gold-text">Comandas Abertas</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {comandasAbertas.length} {comandasAbertas.length === 1 ? 'comanda aberta' : 'comandas abertas'}
+              </p>
+            </div>
             <button
               onClick={() => setView('nova-comanda')}
               className="btn-poker-primary px-4 py-2 rounded-xl flex items-center gap-2"
@@ -186,6 +192,28 @@ export default function GarcomPage() {
               Nova
             </button>
           </div>
+
+          {/* Campo de Busca */}
+          {comandasAbertas.length > 0 && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar jogador..."
+                value={buscaComanda}
+                onChange={(e) => setBuscaComanda(e.target.value)}
+                className="pl-10 bg-poker-green-dark/50 border-primary/20 focus:border-primary"
+              />
+              {buscaComanda && (
+                <button
+                  onClick={() => setBuscaComanda('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
 
           {comandasAbertas.length === 0 ? (
             <div className="text-center py-12">
@@ -200,7 +228,11 @@ export default function GarcomPage() {
             </div>
           ) : (
             <div className="grid gap-3">
-              {comandasAbertas.map((comanda) => (
+              {comandasAbertas
+                .filter((comanda) => 
+                  comanda.cliente.nome.toLowerCase().includes(buscaComanda.toLowerCase())
+                )
+                .map((comanda) => (
                 <motion.button
                   key={comanda.id}
                   whileTap={{ scale: 0.98 }}
@@ -228,6 +260,20 @@ export default function GarcomPage() {
                   </div>
                 </motion.button>
               ))}
+              {comandasAbertas.filter((comanda) => 
+                comanda.cliente.nome.toLowerCase().includes(buscaComanda.toLowerCase())
+              ).length === 0 && buscaComanda && (
+                <div className="poker-card p-8 text-center">
+                  <Search className="w-12 h-12 mx-auto text-muted-foreground/30 mb-2" />
+                  <p className="text-muted-foreground">Nenhuma comanda encontrada para "{buscaComanda}"</p>
+                  <button
+                    onClick={() => setBuscaComanda('')}
+                    className="mt-3 text-primary text-sm hover:underline"
+                  >
+                    Limpar busca
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

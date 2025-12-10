@@ -11,7 +11,8 @@ import {
   Menu, 
   X,
   LogOut,
-  UserCog
+  UserCog,
+  FileText
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
@@ -159,7 +160,7 @@ export default function Sidebar() {
       {/* Mobile Bottom Navigation - APENAS ESTE NO MOBILE */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 glass-dark border-t border-primary/20 z-40 safe-area-inset-bottom">
         <div className="flex justify-center items-center">
-          <div className={`grid gap-0 max-w-md ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'}`}>
+          <div className={`grid gap-0 max-w-md ${isAdmin ? 'grid-cols-6' : 'grid-cols-4'}`}>
             {navigation.map((item) => {
               const isActive = pathname === item.href
               const Icon = item.icon
