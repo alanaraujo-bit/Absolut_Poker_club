@@ -36,15 +36,37 @@ export default function PerfilGarcom() {
       return
     }
 
-    loadStats()
+    // Carregar stats inicialmente e configurar atualização automática
+    if (usuario.id) {
+      loadStats()
+      
+      // Atualização automática a cada 5 segundos
+      const interval = setInterval(() => {
+        loadStats()
+      }, 5000)
+
+      return () => clearInterval(interval)
+    }
   }, [usuario, router])
 
   const loadStats = async () => {
     try {
-      const response = await fetch(`/api/garcom/perfil?garcomId=${usuario?.id}`)
+      if (!usuario?.id) {
+        console.log('Usuário não carregado ainda')
+        return
+      }
+
+      console.log('Carregando stats do perfil para garçom:', usuario.id)
+      const response = await fetch(`/api/garcom/perfil?garcomId=${usuario.id}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        }
+      })
       if (!response.ok) throw new Error('Erro ao carregar estatísticas')
       
       const data = await response.json()
+      console.log('Stats do perfil carregadas:', data)
       setStats(data)
     } catch (error) {
       console.error('Erro ao carregar perfil:', error)

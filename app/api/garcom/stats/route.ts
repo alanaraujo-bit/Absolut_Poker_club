@@ -9,6 +9,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const garcomId = searchParams.get('garcomId')
     
+    console.log('[API Stats Garçom] Request recebido para garcomId:', garcomId)
+    
     const hoje = new Date()
     hoje.setHours(0, 0, 0, 0)
 
@@ -76,7 +78,7 @@ export async function GET(request: Request) {
       })),
     }))
 
-    return NextResponse.json({
+    const response = {
       stats: {
         comandasAbertas,
         comandasFechadas,
@@ -85,7 +87,10 @@ export async function GET(request: Request) {
       },
       topProdutos,
       comandas: comandasFormatadas,
-    })
+    }
+
+    console.log('[API Stats Garçom] Dados retornados:', response.stats, 'Top Produtos:', response.topProdutos.length)
+    return NextResponse.json(response)
   } catch (error) {
     console.error('Erro ao buscar estatísticas:', error)
     return NextResponse.json({ error: 'Erro ao buscar estatísticas' }, { status: 500 })

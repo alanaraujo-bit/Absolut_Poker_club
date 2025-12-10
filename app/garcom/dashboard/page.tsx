@@ -27,6 +27,8 @@ export default function DashboardGarcomPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!usuario?.id) return
+
     carregarStats()
     
     // Atualização automática a cada 3 segundos (mais rápido para garçom)
@@ -35,12 +37,24 @@ export default function DashboardGarcomPage() {
     }, 3000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [usuario])
 
   const carregarStats = async () => {
     try {
-      const res = await fetch(`/api/garcom/stats?garcomId=${usuario?.id}`)
+      if (!usuario?.id) {
+        console.log('Usuário não carregado ainda')
+        return
+      }
+
+      console.log('Carregando stats do dashboard para garçom:', usuario.id)
+      const res = await fetch(`/api/garcom/stats?garcomId=${usuario.id}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        }
+      })
       const data = await res.json()
+      console.log('Stats do dashboard carregadas:', data)
       setStats(data.stats)
       setTopProdutos(data.topProdutos)
     } catch (error) {
