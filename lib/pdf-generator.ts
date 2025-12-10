@@ -821,3 +821,308 @@ function getPeriodoLabel(periodo: string): string {
   }
 }
 
+interface ComandaDetalhadaData {
+  comandas: any[]
+  estatisticas: {
+    totalComandas: number
+    comandasAbertas: number
+    comandasFechadas: number
+    valorTotal: number
+    valorMedio: number
+  }
+  topProdutos: any[]
+  vendasPorGarcom: any[]
+  vendasPorDia: any[]
+  periodo: string
+}
+
+export function generateRelatorioComandasPDF(data: ComandaDetalhadaData) {
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.width
+  const pageHeight = doc.internal.pageSize.height
+  
+  const goldColor: [number, number, number] = [212, 175, 55]
+  const darkGold: [number, number, number] = [184, 150, 12]
+  const blackBg: [number, number, number] = [10, 10, 10]
+  
+  // Background
+  doc.setFillColor(...blackBg)
+  doc.rect(0, 0, pageWidth, pageHeight, 'F')
+  
+  // Header
+  doc.setFillColor(...goldColor)
+  doc.rect(0, 0, pageWidth, 35, 'F')
+  
+  doc.setTextColor(0, 0, 0)
+  doc.setFontSize(20)
+  doc.setFont('helvetica', 'bold')
+  doc.text('ABSOLUT POKER CLUB', pageWidth / 2, 12, { align: 'center' })
+  
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.text('ACATH - Associacao Canaense Absolut de Texas Hold\'em', pageWidth / 2, 20, { align: 'center' })
+  
+  doc.setFontSize(9)
+  doc.text('Canaa dos Carajas - PA', pageWidth / 2, 27, { align: 'center' })
+  
+  doc.setDrawColor(...darkGold)
+  doc.setLineWidth(1.5)
+  doc.line(0, 35, pageWidth, 35)
+  
+  let yPos = 45
+  
+  // Título
+  doc.setTextColor(...goldColor)
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.text('RELATORIO DETALHADO DE COMANDAS', pageWidth / 2, yPos, { align: 'center' })
+  
+  yPos += 7
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.text(`Período: ${data.periodo}`, pageWidth / 2, yPos, { align: 'center' })
+  
+  yPos += 5
+  doc.setFontSize(8)
+  doc.setTextColor(200, 200, 200)
+  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, pageWidth / 2, yPos, { align: 'center' })
+  
+  yPos += 12
+  
+  // Cards de estatísticas
+  const cardWidth = 35
+  const cardSpacing = 5
+  const startX = (pageWidth - (cardWidth * 5 + cardSpacing * 4)) / 2
+  
+  const stats = [
+    { label: 'Total', value: data.estatisticas.totalComandas.toString() },
+    { label: 'Abertas', value: data.estatisticas.comandasAbertas.toString() },
+    { label: 'Fechadas', value: data.estatisticas.comandasFechadas.toString() },
+    { label: 'Valor Total', value: formatCurrency(data.estatisticas.valorTotal) },
+    { label: 'Ticket Médio', value: formatCurrency(data.estatisticas.valorMedio) }
+  ]
+  
+  stats.forEach((stat, index) => {
+    const x = startX + (cardWidth + cardSpacing) * index
+    
+    doc.setFillColor(26, 26, 26)
+    doc.roundedRect(x, yPos, cardWidth, 18, 2, 2, 'F')
+    doc.setDrawColor(...goldColor)
+    doc.setLineWidth(0.3)
+    doc.roundedRect(x, yPos, cardWidth, 18, 2, 2, 'S')
+    
+    doc.setTextColor(...goldColor)
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'bold')
+    doc.text(stat.label, x + cardWidth / 2, yPos + 6, { align: 'center' })
+    
+    doc.setFontSize(9)
+    doc.setTextColor(255, 255, 255)
+    doc.text(stat.value, x + cardWidth / 2, yPos + 14, { align: 'center' })
+  })
+  
+  yPos += 26
+  
+  // Top Produtos
+  if (data.topProdutos.length > 0) {
+    doc.setTextColor(...goldColor)
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('TOP 5 PRODUTOS', 15, yPos)
+    
+    yPos += 6
+    
+    autoTable(doc, {
+      startY: yPos,
+      head: [['#', 'Produto', 'Qtd', 'Total']],
+      body: data.topProdutos.slice(0, 5).map((p, i) => [
+        `${i + 1}`,
+        p.nome,
+        p.quantidade.toString(),
+        formatCurrency(p.valorTotal)
+      ]),
+      theme: 'grid',
+      headStyles: {
+        fillColor: goldColor,
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        fontSize: 9,
+        halign: 'center'
+      },
+      bodyStyles: {
+        fillColor: [26, 26, 26],
+        textColor: [255, 255, 255],
+        fontSize: 8
+      },
+      alternateRowStyles: {
+        fillColor: [20, 20, 20]
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 12 },
+        1: { halign: 'left', cellWidth: 90 },
+        2: { halign: 'center', cellWidth: 25 },
+        3: { halign: 'right', cellWidth: 40 }
+      },
+      margin: { left: 15, right: 15 }
+    })
+    
+    yPos = (doc as any).lastAutoTable.finalY + 12
+  }
+  
+  // Vendas por Garçom
+  if (data.vendasPorGarcom.length > 0 && yPos < pageHeight - 60) {
+    doc.setTextColor(...goldColor)
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('VENDAS POR GARÇOM', 15, yPos)
+    
+    yPos += 6
+    
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Garçom', 'Comandas', 'Total']],
+      body: data.vendasPorGarcom.map(g => [
+        g.nome,
+        g.comandas.toString(),
+        formatCurrency(g.valorTotal)
+      ]),
+      theme: 'grid',
+      headStyles: {
+        fillColor: goldColor,
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        fontSize: 9,
+        halign: 'center'
+      },
+      bodyStyles: {
+        fillColor: [26, 26, 26],
+        textColor: [255, 255, 255],
+        fontSize: 8
+      },
+      alternateRowStyles: {
+        fillColor: [20, 20, 20]
+      },
+      columnStyles: {
+        0: { halign: 'left', cellWidth: 90 },
+        1: { halign: 'center', cellWidth: 35 },
+        2: { halign: 'right', cellWidth: 42 }
+      },
+      margin: { left: 15, right: 15 }
+    })
+    
+    yPos = (doc as any).lastAutoTable.finalY + 12
+  }
+  
+  // Nova página para comandas
+  if (data.comandas.length > 0) {
+    doc.addPage()
+    doc.setFillColor(...blackBg)
+    doc.rect(0, 0, pageWidth, pageHeight, 'F')
+    
+    yPos = 20
+    
+    doc.setTextColor(...goldColor)
+    doc.setFontSize(14)
+    doc.setFont('helvetica', 'bold')
+    doc.text('COMANDAS DETALHADAS', 15, yPos)
+    
+    yPos += 8
+    doc.setDrawColor(...goldColor)
+    doc.line(15, yPos, pageWidth - 15, yPos)
+    
+    yPos += 10
+    
+    data.comandas.forEach((comanda, index) => {
+      if (yPos > pageHeight - 50) {
+        doc.addPage()
+        doc.setFillColor(...blackBg)
+        doc.rect(0, 0, pageWidth, pageHeight, 'F')
+        yPos = 20
+      }
+      
+      // Header da comanda
+      doc.setTextColor(...goldColor)
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.text(`Comanda #${comanda.id}`, 20, yPos)
+      
+      doc.setTextColor(200, 200, 200)
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'normal')
+      
+      const dataAberturaISO = comanda.dataAbertura.split('T')[0]
+      const [ano, mes, dia] = dataAberturaISO.split('-')
+      const dataFormatada = `${dia}/${mes}/${ano}`
+      
+      const status = comanda.status === 'aberta' ? 'Aberta' : 'Fechada'
+      doc.text(`${comanda.cliente.nome} | ${dataFormatada} | ${status}`, 20, yPos + 4)
+      
+      yPos += 10
+      
+      // Tabela de itens
+      const itensData = comanda.itens.map((item: any) => [
+        item.produto.nome,
+        item.quantidade.toString(),
+        formatCurrency(item.precoUnitario),
+        formatCurrency(item.subtotal)
+      ])
+      
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Produto', 'Qtd', 'Preço', 'Subtotal']],
+        body: itensData,
+        theme: 'plain',
+        headStyles: {
+          fillColor: [30, 30, 30],
+          textColor: [180, 180, 180],
+          fontSize: 7
+        },
+        bodyStyles: {
+          fillColor: [15, 15, 15],
+          textColor: [220, 220, 220],
+          fontSize: 7
+        },
+        columnStyles: {
+          0: { halign: 'left', cellWidth: 85 },
+          1: { halign: 'center', cellWidth: 25 },
+          2: { halign: 'right', cellWidth: 30 },
+          3: { halign: 'right', cellWidth: 30 }
+        },
+        margin: { left: 20, right: 20 }
+      })
+      
+      yPos = (doc as any).lastAutoTable.finalY + 3
+      
+      // Total da comanda
+      doc.setFillColor(30, 30, 30)
+      doc.roundedRect(pageWidth - 80, yPos, 60, 8, 1, 1, 'F')
+      
+      doc.setTextColor(...goldColor)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Total:', pageWidth - 75, yPos + 5.5)
+      doc.text(formatCurrency(comanda.valorTotal), pageWidth - 25, yPos + 5.5, { align: 'right' })
+      
+      yPos += 14
+    })
+  }
+  
+  // Footer
+  const totalPages = doc.getNumberOfPages()
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i)
+    doc.setDrawColor(...goldColor)
+    doc.setLineWidth(0.5)
+    doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15)
+    
+    doc.setFontSize(7)
+    doc.setTextColor(150, 150, 150)
+    doc.setFont('helvetica', 'normal')
+    doc.text('Absolut Poker Club - ACATH | (94) 99281-7389', pageWidth / 2, pageHeight - 8, { align: 'center' })
+    doc.text(`Página ${i} de ${totalPages}`, pageWidth - 20, pageHeight - 8, { align: 'right' })
+  }
+  
+  const filename = `Relatorio_Comandas_ACATH_${new Date().toISOString().split('T')[0]}.pdf`
+  doc.save(filename)
+}
+

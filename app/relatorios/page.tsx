@@ -257,6 +257,16 @@ export default function RelatoriosPage() {
             </div>
             <div className="flex gap-2">
               <Button 
+                onClick={() => window.location.href = '/relatorios/comandas'}
+                size="sm"
+                variant="default"
+                className="gap-2 btn-poker-primary"
+              >
+                <Filter className="h-4 w-4" />
+                <span className="hidden sm:inline">Comandas Detalhadas</span>
+                <span className="sm:hidden">Detalhado</span>
+              </Button>
+              <Button 
                 onClick={handleExportPDF}
                 size="sm"
                 variant="outline"
