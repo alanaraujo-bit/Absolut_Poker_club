@@ -1,6 +1,42 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// GET - Buscar usuário específico
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: idStr } = await params
+    const id = parseInt(idStr)
+
+    const usuario = await prisma.usuario.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        nome: true,
+        username: true,
+        tipo: true,
+        ativo: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
+    if (!usuario) {
+      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
+    }
+
+    return NextResponse.json(usuario)
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error)
+    return NextResponse.json(
+      { error: 'Erro ao buscar usuário' },
+      { status: 500 }
+    )
+  }
+}
+
 // PUT - Atualizar usuário
 export async function PUT(
   request: Request,

@@ -313,9 +313,11 @@ export default function GarcomPage() {
                   </div>
                 ) : (
                   comandasFechadas.map((comanda) => (
-                    <div
+                    <motion.button
                       key={comanda.id}
-                      className="poker-card p-4 opacity-75"
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => selecionarComanda(comanda)}
+                      className="poker-card p-4 opacity-75 hover:opacity-100 transition-opacity w-full text-left"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div>
@@ -325,9 +327,12 @@ export default function GarcomPage() {
                             {formatarData(comanda.dataAbertura)}
                           </p>
                         </div>
-                        <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold">
-                          ✓ Fechada
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold">
+                            ✓ Fechada
+                          </span>
+                          <ChevronRight className="w-5 h-5 text-primary" />
+                        </div>
                       </div>
                       
                       <div className="flex items-center justify-between mt-2 pt-2 border-t border-primary/20">
@@ -338,7 +343,7 @@ export default function GarcomPage() {
                           R$ {comanda.valorTotal.toFixed(2)}
                         </span>
                       </div>
-                    </div>
+                    </motion.button>
                   ))
                 )}
               </motion.div>
@@ -587,6 +592,26 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
   const router = useRouter()
   const { toast } = useToast()
   const [excluindo, setExcluindo] = useState(false)
+  const [garcomNome, setGarcomNome] = useState<string | null>(null)
+  const comandaFechada = comanda.status === 'fechada'
+
+  useEffect(() => {
+    if (comanda.garcomId) {
+      fetch(`/api/usuarios/${comanda.garcomId}`)
+        .then(res => res.json())
+        .then(data => setGarcomNome(data.nome))
+        .catch(() => setGarcomNome('Não identificado'))
+    }
+  }, [comanda.garcomId])
+
+  const formatarData = (data: string) => {
+    return new Date(data).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
 
   const excluirComanda = async () => {
     if (!confirm(`Tem certeza que deseja excluir a comanda #${comanda.id} de ${comanda.cliente.nome}?`)) {
@@ -633,8 +658,20 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
 
   const grupos = agruparPorData()
 
+  const formatarFormaPagamento = (forma: string) => {
+    const formas: any = {
+      'dinheiro': '💵 Dinheiro',
+      'pix': '📱 PIX',
+      'cartao': '💳 Cartão',
+      'debito': '💳 Débito',
+      'credito': '💳 Crédito',
+      'saldo': '💰 Saldo',
+    }
+    return formas[forma] || forma
+  }
+
   return (
-    <div className="pb-40">
+    <div className={comandaFechada ? "pb-20" : "pb-40"}>
       <div className="p-4 space-y-4">
         <button onClick={onVoltar} className="flex items-center gap-2 text-muted-foreground">
           <X className="w-5 h-5" />
@@ -642,15 +679,67 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
         </button>
 
         <div className="glass-poker rounded-xl p-4">
-          <h2 className="text-xl font-bold">{comanda.cliente.nome}</h2>
-          <p className="text-sm text-muted-foreground">
-            Comanda #{comanda.id}
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-xl font-bold">{comanda.cliente.nome}</h2>
+              <p className="text-sm text-muted-foreground">
+                Comanda #{comanda.id}
+              </p>
+            </div>
+            {comandaFechada && (
+              <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm font-semibold">
+                ✓ Fechada
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="glass-poker rounded-xl p-4">
           <p className="text-sm text-muted-foreground">Total</p>
           <p className="text-3xl font-bold gold-text">R$ {comanda.valorTotal.toFixed(2)}</p>
+        </div>
+
+        {/* Informações da Comanda */}
+        <div className="glass-poker rounded-xl p-4 space-y-3">
+          <h3 className="font-bold gold-text mb-3">📋 Informações</h3>
+          
+          <div className="flex items-center justify-between py-2 border-b border-primary/10">
+            <span className="text-sm text-muted-foreground">Aberta em:</span>
+            <span className="text-sm font-medium">{formatarData(comanda.dataAbertura)}</span>
+          </div>
+
+          {comanda.garcomId && (
+            <div className="flex items-center justify-between py-2 border-b border-primary/10">
+              <span className="text-sm text-muted-foreground">Aberta por:</span>
+              <span className="text-sm font-medium">{garcomNome || 'Carregando...'}</span>
+            </div>
+          )}
+
+          {comandaFechada && comanda.dataFechamento && (
+            <div className="flex items-center justify-between py-2 border-b border-primary/10">
+              <span className="text-sm text-muted-foreground">Fechada em:</span>
+              <span className="text-sm font-medium">{formatarData(comanda.dataFechamento)}</span>
+            </div>
+          )}
+
+          {comandaFechada && comanda.formaPagamento && (
+            <div className="flex items-center justify-between py-2 border-b border-primary/10">
+              <span className="text-sm text-muted-foreground">Forma de Pagamento:</span>
+              <span className="text-sm font-medium">{formatarFormaPagamento(comanda.formaPagamento)}</span>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between py-2">
+            <span className="text-sm text-muted-foreground">Total de Itens:</span>
+            <span className="text-sm font-medium">{comanda.itens?.length || 0}</span>
+          </div>
+
+          {comanda.observacao && (
+            <div className="pt-2 border-t border-primary/10">
+              <p className="text-sm text-muted-foreground mb-1">Observação:</p>
+              <p className="text-sm">{comanda.observacao}</p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -678,30 +767,32 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
         </div>
       </div>
 
-      <div className="fixed bottom-16 left-0 right-0 glass-dark border-t border-primary/20 p-4 space-y-3 z-30">
-        <button
-          onClick={() => router.push(`/garcom/comanda/${comanda.id}/adicionar`)}
-          className="w-full btn-poker-primary h-12 text-lg font-semibold rounded-xl flex items-center justify-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          Adicionar Itens
-        </button>
-        <button
-          onClick={() => router.push(`/garcom/comanda/${comanda.id}/fechar`)}
-          className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
-        >
-          <Receipt className="w-5 h-5" />
-          Fechar Comanda
-        </button>
-        <button
-          onClick={excluirComanda}
-          disabled={excluindo}
-          className="w-full bg-red-600 hover:bg-red-700 text-white h-12 text-lg font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Trash2 className="w-5 h-5" />
-          {excluindo ? 'Excluindo...' : 'Excluir Comanda'}
-        </button>
-      </div>
+      {!comandaFechada && (
+        <div className="fixed bottom-16 left-0 right-0 glass-dark border-t border-primary/20 p-4 space-y-3 z-30">
+          <button
+            onClick={() => router.push(`/garcom/comanda/${comanda.id}/adicionar`)}
+            className="w-full btn-poker-primary h-12 text-lg font-semibold rounded-xl flex items-center justify-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Adicionar Itens
+          </button>
+          <button
+            onClick={() => router.push(`/garcom/comanda/${comanda.id}/fechar`)}
+            className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+          >
+            <Receipt className="w-5 h-5" />
+            Fechar Comanda
+          </button>
+          <button
+            onClick={excluirComanda}
+            disabled={excluindo}
+            className="w-full bg-red-600 hover:bg-red-700 text-white h-12 text-lg font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Trash2 className="w-5 h-5" />
+            {excluindo ? 'Excluindo...' : 'Excluir Comanda'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
