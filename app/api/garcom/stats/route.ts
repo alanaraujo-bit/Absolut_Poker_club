@@ -11,8 +11,21 @@ export async function GET(request: Request) {
     
     console.log('[API Stats Garçom] Request recebido para garcomId:', garcomId)
     
-    const hoje = new Date()
-    hoje.setHours(0, 0, 0, 0)
+    // Usar timezone UTC-3 (horário de Brasília)
+    const agora = new Date()
+    const offsetBrasilia = -3 * 60
+    const offsetLocal = agora.getTimezoneOffset()
+    const diffMinutos = offsetBrasilia - offsetLocal
+    
+    const agoraBrasilia = new Date(agora.getTime() + diffMinutos * 60 * 1000)
+    
+    // Início do dia em Brasília
+    const hoje = new Date(Date.UTC(
+      agoraBrasilia.getFullYear(),
+      agoraBrasilia.getMonth(),
+      agoraBrasilia.getDate(),
+      3, 0, 0
+    ))
 
     const where: any = {
       dataAbertura: {

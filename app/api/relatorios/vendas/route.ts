@@ -7,19 +7,49 @@ export const revalidate = 0
 
 export async function GET() {
   try {
-    // Usar timezone local para calcular o início do dia corretamente
-    const agoraLocal = new Date()
-    const hoje = new Date(agoraLocal.getFullYear(), agoraLocal.getMonth(), agoraLocal.getDate())
+    // Usar timezone UTC-3 (horário de Brasília) para calcular corretamente
+    const agora = new Date()
+    const offsetBrasilia = -3 * 60 // UTC-3 em minutos
+    const offsetLocal = agora.getTimezoneOffset()
+    const diffMinutos = offsetBrasilia - offsetLocal
+    
+    const agoraBrasilia = new Date(agora.getTime() + diffMinutos * 60 * 1000)
+    
+    // Início do dia atual em Brasília
+    const hoje = new Date(Date.UTC(
+      agoraBrasilia.getFullYear(),
+      agoraBrasilia.getMonth(),
+      agoraBrasilia.getDate(),
+      3, 0, 0 // 00:00 em Brasília = 03:00 UTC
+    ))
+    
     const amanha = new Date(hoje)
-    amanha.setDate(amanha.getDate() + 1)
+    amanha.setUTCDate(amanha.getUTCDate() + 1)
 
-    const inicioSemana = new Date(hoje)
-    inicioSemana.setDate(hoje.getDate() - hoje.getDay())
+    // Início da semana (domingo)
+    const diaSemana = agoraBrasilia.getDay()
+    const inicioSemana = new Date(Date.UTC(
+      agoraBrasilia.getFullYear(),
+      agoraBrasilia.getMonth(),
+      agoraBrasilia.getDate() - diaSemana,
+      3, 0, 0
+    ))
     const fimSemana = new Date(inicioSemana)
-    fimSemana.setDate(fimSemana.getDate() + 7)
+    fimSemana.setUTCDate(fimSemana.getUTCDate() + 7)
 
-    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
-    const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1)
+    // Início do mês
+    const inicioMes = new Date(Date.UTC(
+      agoraBrasilia.getFullYear(),
+      agoraBrasilia.getMonth(),
+      1,
+      3, 0, 0
+    ))
+    const fimMes = new Date(Date.UTC(
+      agoraBrasilia.getFullYear(),
+      agoraBrasilia.getMonth() + 1,
+      1,
+      3, 0, 0
+    ))
 
     // Vendas de hoje - buscar por dataAbertura (todas as comandas abertas hoje)
     const comandasHoje = await prisma.comanda.findMany({
@@ -65,6 +95,19 @@ export async function GET() {
       (sum, comanda) => sum + Number(comanda.valorTotal),
       0
     )
+
+    // Log para debug
+    console.log('Relatório de Vendas:', {
+      dataHoraBrasilia: agoraBrasilia.toLocaleString('pt-BR'),
+      hoje: hoje.toISOString(),
+      amanha: amanha.toISOString(),
+      comandasHoje: comandasHoje.length,
+      vendasHoje,
+      comandasSemana: comandasSemana.length,
+      vendasSemana,
+      comandasMes: comandasMes.length,
+      vendasMes,
+    })
 
     return NextResponse.json({
       hoje: vendasHoje,

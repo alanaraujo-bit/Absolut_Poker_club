@@ -9,8 +9,21 @@ export async function GET() {
   try {
     console.log('🔄 API Dashboard Stats chamada:', new Date().toLocaleTimeString())
     
-    const hoje = new Date()
-    hoje.setHours(0, 0, 0, 0)
+    // Usar timezone UTC-3 (horário de Brasília)
+    const agora = new Date()
+    const offsetBrasilia = -3 * 60
+    const offsetLocal = agora.getTimezoneOffset()
+    const diffMinutos = offsetBrasilia - offsetLocal
+    
+    const agoraBrasilia = new Date(agora.getTime() + diffMinutos * 60 * 1000)
+    
+    // Início do dia em Brasília
+    const hoje = new Date(Date.UTC(
+      agoraBrasilia.getFullYear(),
+      agoraBrasilia.getMonth(),
+      agoraBrasilia.getDate(),
+      3, 0, 0
+    ))
 
     // Total vendido hoje (comandas fechadas)
     const comandasHoje = await prisma.comanda.findMany({
