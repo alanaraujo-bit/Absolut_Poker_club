@@ -306,7 +306,6 @@ export async function GET(request: Request) {
     // ========== ÚLTIMAS COMANDAS FECHADAS ==========
     const ultimasComandasFechadas = comandasFechadas.slice(0, 5).map(c => ({
       id: c.id,
-      numero: c.numero,
       cliente: c.cliente.nome,
       valorTotal: Number(c.valorTotal),
       dataFechamento: c.dataFechamento,
