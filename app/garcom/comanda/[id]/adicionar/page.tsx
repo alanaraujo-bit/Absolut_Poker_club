@@ -39,7 +39,7 @@ export default function AdicionarItensPage({ params }: { params: { id: string } 
   }, [])
 
   const carregarProdutos = async () => {
-    const res = await fetch('/api/produtos')
+    const res = await fetch('/api/produtos?ordenarPorPopularidade=true')
     const data = await res.json()
     setProdutos(data)
   }

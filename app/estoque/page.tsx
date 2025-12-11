@@ -21,6 +21,7 @@ interface Produto {
   nome: string
   precoVenda: number
   precoCusto: number | null
+  categoria: string
   unidadeMedida: string
   estoqueAtual: number
   estoqueMinimo: number
@@ -37,6 +38,7 @@ export default function EstoquePage() {
     nome: '',
     precoVenda: '',
     precoCusto: '',
+    categoria: 'Bebidas',
     unidadeMedida: 'unidade',
     estoqueInicial: '',
     estoqueMinimo: '',
@@ -85,6 +87,7 @@ export default function EstoquePage() {
           nome: novoProduto.nome,
           precoVenda: parseCurrencyInput(novoProduto.precoVenda),
           precoCusto: novoProduto.precoCusto ? parseCurrencyInput(novoProduto.precoCusto) : null,
+          categoria: novoProduto.categoria,
           unidadeMedida: novoProduto.unidadeMedida,
           estoqueAtual: novoProduto.estoqueInicial ? parseInt(novoProduto.estoqueInicial) : null,
           estoqueMinimo: novoProduto.estoqueMinimo ? parseInt(novoProduto.estoqueMinimo) : null,
@@ -100,6 +103,7 @@ export default function EstoquePage() {
           nome: '',
           precoVenda: '',
           precoCusto: '',
+          categoria: 'Bebidas',
           unidadeMedida: 'unidade',
           estoqueInicial: '',
           estoqueMinimo: '',
@@ -248,6 +252,7 @@ export default function EstoquePage() {
           nome: produtoEditando.nome,
           precoVenda: parseCurrencyInput(precoVendaEdit),
           precoCusto: precoCustoEdit ? parseCurrencyInput(precoCustoEdit) : null,
+          categoria: produtoEditando.categoria,
           unidadeMedida: produtoEditando.unidadeMedida,
           estoqueMinimo: Number(produtoEditando.estoqueMinimo),
         }),
@@ -349,6 +354,25 @@ export default function EstoquePage() {
                   autoComplete="off"
                 />
               </div>
+            </div>
+            <div>
+              <Label htmlFor="categoria">Categoria *</Label>
+              <select
+                id="categoria"
+                value={novoProduto.categoria}
+                onChange={(e) => handleNovoProdutoChange('categoria', e.target.value)}
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="Bebidas">Bebidas</option>
+                <option value="Cervejas">Cervejas</option>
+                <option value="Destilados">Destilados</option>
+                <option value="Comidas">Comidas</option>
+                <option value="Lanches">Lanches</option>
+                <option value="Porções">Porções</option>
+                <option value="Pratos">Pratos</option>
+                <option value="Outros">Outros</option>
+              </select>
             </div>
             <div>
               <Label htmlFor="unidadeMedida">Unidade de Medida *</Label>
@@ -475,6 +499,25 @@ export default function EstoquePage() {
                   autoComplete="off"
                 />
               </div>
+            </div>
+            <div>
+              <Label htmlFor="edit-categoria">Categoria *</Label>
+              <select
+                id="edit-categoria"
+                value={produtoEditando.categoria}
+                onChange={(e) => setProdutoEditando({ ...produtoEditando, categoria: e.target.value })}
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="Bebidas">Bebidas</option>
+                <option value="Cervejas">Cervejas</option>
+                <option value="Destilados">Destilados</option>
+                <option value="Comidas">Comidas</option>
+                <option value="Lanches">Lanches</option>
+                <option value="Porções">Porções</option>
+                <option value="Pratos">Pratos</option>
+                <option value="Outros">Outros</option>
+              </select>
             </div>
             <div>
               <Label htmlFor="edit-unidadeMedida">Unidade de Medida *</Label>

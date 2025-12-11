@@ -607,8 +607,8 @@ function ItemComandaCard({ item, comandaFechada, onRemover }: any) {
           <p className="font-medium">{item.produto.nome}</p>
           <p className="text-sm text-muted-foreground">
             {item.produto.unidadeMedida === 'kg' 
-              ? `${item.quantidade}kg × R$ ${item.precoUnitario.toFixed(2)}/kg`
-              : `${item.quantidade}x R$ ${item.precoUnitario.toFixed(2)}`
+              ? `${item.quantidade.toFixed(2)}kg × R$ ${item.precoUnitario.toFixed(2)}/kg`
+              : `${item.quantidade}x × R$ ${item.precoUnitario.toFixed(2)}`
             }
           </p>
         </div>
@@ -625,6 +625,129 @@ function ItemComandaCard({ item, comandaFechada, onRemover }: any) {
             </button>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function ItemAgrupadoCard({ grupo, comandaFechada, onRemoverItens }: any) {
+  const [removendo, setRemovendo] = useState(false)
+  const [expandido, setExpandido] = useState(false)
+  const [quantidadeSelecionada, setQuantidadeSelecionada] = useState(grupo.quantidadeTotal)
+
+  const handleRemoverSelecionados = async () => {
+    if (quantidadeSelecionada === 0) return
+    
+    if (!confirm(`Deseja remover ${quantidadeSelecionada}x ${grupo.produto.nome}?`)) {
+      return
+    }
+
+    setRemovendo(true)
+    try {
+      let quantidadeRestante = quantidadeSelecionada
+      
+      // Remover itens até completar a quantidade selecionada
+      for (const item of grupo.itens) {
+        if (quantidadeRestante <= 0) break
+        
+        if (item.quantidade <= quantidadeRestante) {
+          // Remover o item completamente
+          await onRemoverItens(item.id)
+          quantidadeRestante -= item.quantidade
+        } else {
+          // Esse caso precisaria de uma API para atualizar quantidade parcial
+          // Por enquanto, vamos remover o item completo se for selecionado
+          await onRemoverItens(item.id)
+          quantidadeRestante = 0
+        }
+      }
+      
+      window.location.reload() // Recarregar para atualizar a visualização
+    } finally {
+      setRemovendo(false)
+    }
+  }
+
+  return (
+    <div className="poker-card p-3">
+      <div className="space-y-2">
+        <div className="flex justify-between items-start gap-2">
+          <div className="flex-1">
+            <p className="font-medium">{grupo.produto.nome}</p>
+            <p className="text-sm text-muted-foreground">
+              {grupo.produto.unidadeMedida === 'kg' 
+                ? `${grupo.quantidadeTotal.toFixed(2)}kg × R$ ${grupo.precoUnitario.toFixed(2)}/kg`
+                : `${grupo.quantidadeTotal}x × R$ ${grupo.precoUnitario.toFixed(2)}`
+              }
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <p className="font-bold gold-text">R$ {grupo.subtotalTotal.toFixed(2)}</p>
+            {!comandaFechada && (
+              <button
+                onClick={() => setExpandido(!expandido)}
+                className="p-2 rounded-lg hover:bg-primary/20 text-primary transition-all"
+                title="Opções"
+              >
+                <motion.div
+                  animate={{ rotate: expandido ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </motion.div>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {expandido && !comandaFechada && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="pt-3 border-t border-primary/20 space-y-3"
+          >
+            <div>
+              <label className="text-xs text-muted-foreground block mb-2">
+                Quantidade a remover:
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setQuantidadeSelecionada(Math.max(0, quantidadeSelecionada - 1))}
+                  className="px-3 py-1 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary font-bold transition-all"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="0"
+                  max={grupo.quantidadeTotal}
+                  value={quantidadeSelecionada}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0
+                    setQuantidadeSelecionada(Math.min(grupo.quantidadeTotal, Math.max(0, val)))
+                  }}
+                  className="flex-1 bg-poker-green-dark/50 border border-primary/20 rounded-lg px-3 py-2 text-center font-medium focus:border-primary focus:outline-none"
+                />
+                <button
+                  onClick={() => setQuantidadeSelecionada(Math.min(grupo.quantidadeTotal, quantidadeSelecionada + 1))}
+                  className="px-3 py-1 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary font-bold transition-all"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={handleRemoverSelecionados}
+              disabled={removendo || quantidadeSelecionada === 0}
+              className="w-full py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              {removendo ? 'Removendo...' : `Remover ${quantidadeSelecionada}x`}
+            </button>
+          </motion.div>
+        )}
       </div>
     </div>
   )
@@ -740,8 +863,23 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
     const grupos: any = {}
     comanda.itens.forEach((item: any) => {
       const data = new Date(item.dataHora).toLocaleDateString('pt-BR')
-      if (!grupos[data]) grupos[data] = []
-      grupos[data].push(item)
+      if (!grupos[data]) grupos[data] = {}
+      
+      // Agrupar por produto dentro de cada data
+      const produtoKey = `${item.produto.id}-${item.precoUnitario}`
+      if (!grupos[data][produtoKey]) {
+        grupos[data][produtoKey] = {
+          produto: item.produto,
+          precoUnitario: parseFloat(item.precoUnitario),
+          itens: [],
+          quantidadeTotal: 0,
+          subtotalTotal: 0
+        }
+      }
+      
+      grupos[data][produtoKey].itens.push(item)
+      grupos[data][produtoKey].quantidadeTotal += parseFloat(item.quantidade) || 0
+      grupos[data][produtoKey].subtotalTotal += parseFloat(item.subtotal) || 0
     })
     return grupos
   }
@@ -909,42 +1047,39 @@ function DetalhesComandaView({ comanda, onVoltar }: any) {
         )}
 
         <div className="space-y-4">
-          {Object.entries(grupos).map(([data, itens]: any) => (
+          {Object.entries(grupos).map(([data, produtosAgrupados]: any) => (
             <div key={data} className="space-y-2">
               <h3 className="font-semibold gold-text">{data}</h3>
-              {itens.map((item: any) => (
-                <ItemComandaCard 
-                  key={item.id} 
-                  item={item} 
+              {Object.values(produtosAgrupados).map((grupo: any) => (
+                <ItemAgrupadoCard 
+                  key={`${grupo.produto.id}-${grupo.precoUnitario}`}
+                  grupo={grupo}
                   comandaFechada={comandaFechada}
-                  onRemover={async () => {
-                    if (confirm(`Deseja remover ${item.produto.nome} da comanda?`)) {
-                      try {
-                        const res = await fetch(`/api/comandas/${comanda.id}/itens/${item.id}`, {
-                          method: 'DELETE',
-                        })
+                  onRemoverItens={async (itemId: number) => {
+                    const item = grupo.itens.find((i: any) => i.id === itemId)
+                    if (!item) return
 
-                        if (!res.ok) {
-                          const error = await res.json()
-                          throw new Error(error.error)
-                        }
+                    try {
+                      const res = await fetch(`/api/comandas/${comanda.id}/itens/${itemId}`, {
+                        method: 'DELETE',
+                      })
 
-                        toast({
-                          title: '✅ Item removido',
-                          description: `${item.produto.nome} foi removido da comanda`,
-                        })
-
-                        // Recarregar detalhes da comanda
-                        const resComanda = await fetch(`/api/comandas/${comanda.id}`)
-                        const dataComanda = await resComanda.json()
-                        window.location.reload() // Força reload para atualizar a view
-                      } catch (error: any) {
-                        toast({
-                          title: '❌ Erro',
-                          description: error.message,
-                          variant: 'destructive',
-                        })
+                      if (!res.ok) {
+                        const error = await res.json()
+                        throw new Error(error.error)
                       }
+
+                      toast({
+                        title: '✅ Item removido',
+                        description: `${item.produto.nome} foi removido da comanda`,
+                      })
+                    } catch (error: any) {
+                      toast({
+                        title: '❌ Erro',
+                        description: error.message,
+                        variant: 'destructive',
+                      })
+                      throw error
                     }
                   }}
                 />

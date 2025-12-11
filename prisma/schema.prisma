@@ -28,6 +28,7 @@ model Produto {
   nome                   String
   precoVenda            Decimal                 @map("preco_venda") @db.Decimal(10, 2)
   precoCusto            Decimal?                @map("preco_custo") @db.Decimal(10, 2)
+  categoria              String                  @default("Outros")
   unidadeMedida         String                  @default("unidade") @map("unidade_medida")
   estoqueAtual          Int?                    @map("estoque_atual")
   estoqueMinimo         Int?                    @map("estoque_minimo")
