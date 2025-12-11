@@ -70,7 +70,12 @@ export default function DashboardGarcomPage() {
       }
     }
 
-    carregarDashboard()
+    // Usar timeout para evitar duplo carregamento
+    const timer = setTimeout(() => {
+      carregarDashboard()
+    }, 100)
+
+    return () => clearTimeout(timer)
   }, [usuario?.id, periodo])
 
   const formatarValor = (valor: number) => {
